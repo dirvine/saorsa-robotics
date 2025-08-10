@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app
+COPY policy_server/rewarder/requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+COPY policy_server/rewarder /app/
+ENV REWARDER_HOST=0.0.0.0 REWARDER_PORT=18080
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "18080"]

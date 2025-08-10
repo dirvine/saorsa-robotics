@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Claude Code Check",
+            "type": "shell",
+            "command": "${HOME}/.claude/hooks/file-change-hook.sh",
+            "args": ["${file}"],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Claude Format Current File",
+            "type": "shell",
+            "command": "${HOME}/.claude/hooks/file-change-hook.sh",
+            "args": ["${file}"],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Claude Check All Changes",
+            "type": "shell",
+            "command": "bash",
+            "args": ["-c", "git diff --name-only --diff-filter=ACM | grep -E '\\.(rs|py)$' | xargs -I {} ${HOME}/.claude/hooks/file-change-hook.sh {}"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.22"]
+build-backend = "hatchling.build"
+
+[project]
+name = "saoirse-robotics"
+version = "0.1.0"
+description = "SO-101 VLA training scaffold: LeRobot (macOS) + OpenPI/OpenVLA (Linux GPU) + VLM rewarder"
+authors = [{ name = "Saoirse Labs" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "uvicorn[standard]>=0.30",
+  "fastapi>=0.111",
+  "python-dotenv>=1.0",
+  "opencv-python-headless>=4.9",
+  "numpy>=1.26",
+  "pydantic>=2.7",
+  "requests>=2.32",
+  "pyyaml>=6.0",
+  # LeRobot + extras are installed via pip in scripts (platform nuances)
+]
+
+[project.optional-dependencies]
+mac = [
+  # macOS camera utils, optional
+]
+server = [
+  "transformers>=4.42",
+  "accelerate>=1.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.black]
+line-length = 100

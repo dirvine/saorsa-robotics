@@ -1,0 +1,17 @@
+goal_text: "Put the red cube in the blue bowl."
+control_rate_hz: 20
+max_episode_steps: 300
+success_threshold: 0.8
+actors:
+  - arm_id: arm01
+  - arm_id: arm02
+  - arm_id: arm03
+  - arm_id: arm04
+rewarder:
+  url: ${REWARDER_URL}
+  mode: binary_end
+policy_server:
+  url: ${POLICY_SERVER_URL}
+async:
+  actions_per_chunk: ${ACTIONS_PER_CHUNK}
+  chunk_size_threshold: ${CHUNK_SIZE_THRESHOLD}

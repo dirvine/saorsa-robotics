@@ -1,0 +1,11 @@
+robot:
+  port: /dev/tty.usbmodem1101
+  cameras:
+    table:
+      type: opencv
+      index_or_path: 0
+      width: 1280
+      height: 720
+      fps: 20
+safety:
+  ee_limits_file: robot/safety/ee_limits.yaml

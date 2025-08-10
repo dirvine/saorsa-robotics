@@ -1,0 +1,82 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude helper script
+.claude-check
+
+# Logs
+*.log
+logs/
+.saoirse/
+
+# Models and checkpoints
+*.ckpt
+*.pth
+*.safetensors
+*.bin
+checkpoints/
+models/
+
+# Data
+*.h5
+*.hdf5
+*.npy
+*.npz
+data/
+datasets/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker
+.dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+
+# Distribution
+*.whl
+pip-wheel-metadata/

@@ -1,0 +1,13 @@
+# Example end-effector box and joint clamps (edit to your rig)
+cartesian_box:
+  x: [0.10, 0.45]
+  y: [-0.25, 0.25]
+  z: [0.02, 0.35]
+# Optional joint clamps (deg)
+joints:
+  j1: [-150, 150]
+  j2: [-90,  90]
+  j3: [-90,  90]
+  j4: [-150, 150]
+  j5: [-150, 150]
+  j6: [-150, 150]
