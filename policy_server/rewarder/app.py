@@ -12,7 +12,7 @@ try:
 except Exception:
     DefaultAdapter = NoopAdapter
 
-app = FastAPI(title="Saoirse Rewarder", version="0.1.0")
+app = FastAPI(title="Saorsa Rewarder", version="0.1.0")
 
 # Choose adapter via env
 ADAPTER = os.environ.get("REWARD_ADAPTER", "qwen_vl_stub").lower()

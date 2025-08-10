@@ -9,7 +9,7 @@ if [ -f ../.env ]; then set -a; source ../.env; set +a; fi
 CFG="configs/so101_${ARM_ID}.yaml"
 if [[ ! -f "$CFG" ]]; then echo "Missing $CFG"; exit 1; fi
 
-mkdir -p "${LOG_DIR:-$HOME/.saoirse/logs}"
+mkdir -p "${LOG_DIR:-$HOME/.saorsa/logs}"
 
 # Extract basic fields from YAML using python (avoid extra deps)
 PORT=$(python - <<PY
@@ -39,4 +39,4 @@ python -m lerobot.scripts.server.robot_client \
   --pretrained_name_or_path=openpi/pi0_fast_droid \
   --policy_device=cuda \
   --actions_per_chunk=$APC \
-  --chunk_size_threshold=$CST | tee -a "${LOG_DIR:-$HOME/.saoirse/logs}/$ARM_ID.log"
+  --chunk_size_threshold=$CST | tee -a "${LOG_DIR:-$HOME/.saorsa/logs}/$ARM_ID.log"

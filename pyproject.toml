@@ -3,10 +3,10 @@ requires = ["hatchling>=1.22"]
 build-backend = "hatchling.build"
 
 [project]
-name = "saoirse-robotics"
+name = "saorsa-robotics"
 version = "0.1.0"
 description = "SO-101 VLA training scaffold: LeRobot (macOS) + OpenPI/OpenVLA (Linux GPU) + VLM rewarder"
-authors = [{ name = "Saoirse Labs" }]
+authors = [{ name = "Saorsa Labs" }]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

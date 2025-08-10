@@ -33,7 +33,7 @@ env/
 # Logs
 *.log
 logs/
-.saoirse/
+.saorsa/
 
 # Models and checkpoints
 *.ckpt

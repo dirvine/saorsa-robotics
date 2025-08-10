@@ -1,4 +1,4 @@
-# Saoirse Robotics — SO-101 VLA Training Platform
+# Saorsa Robotics — SO-101 VLA Training Platform
 
 > **Production-ready scaffold for training Hugging Face SO-101 robotic arms using Vision-Language-Action policies without demonstrations**
 
@@ -35,8 +35,8 @@ This repository provides a complete, pragmatic setup for controlling multiple SO
 
 ```bash
 # 1. Clone and configure
-git clone https://github.com/saorsa/saoirse-robotics.git
-cd saoirse-robotics
+git clone https://github.com/saorsa/saorsa-robotics.git
+cd saorsa-robotics
 cp .env.example .env  # Edit with your settings
 
 # 2. Mac setup (per arm)
@@ -77,7 +77,7 @@ The system distributes computation optimally between edge devices and GPU server
 ### Directory Structure
 
 ```
-saoirse-robotics/
+saorsa-robotics/
 ├── README.md               # This file
 ├── pyproject.toml          # Python dependencies
 ├── .env.example            # Environment variables template
@@ -297,7 +297,7 @@ source .env
 ARM_ID=arm01 make run-arm
 
 # 3. Monitor performance
-# Check logs in ~/.saoirse/logs/arm01.log
+# Check logs in ~/.saorsa/logs/arm01.log
 # Adjust ACTIONS_PER_CHUNK if needed
 ```
 
@@ -352,7 +352,7 @@ ACTIONS_PER_CHUNK=40        # Actions per inference
 CHUNK_SIZE_THRESHOLD=0.6    # Queue refill threshold
 
 # Logging
-LOG_DIR=$HOME/.saoirse/logs
+LOG_DIR=$HOME/.saorsa/logs
 ```
 
 ### Per-Arm Configuration (robot/configs/so101_armNN.yaml)
@@ -397,7 +397,7 @@ joints:
 ```bash
 # 1. Start GPU policy server
 ssh gpu-server
-cd saoirse-robotics
+cd saorsa-robotics
 make serve-pi
 
 # 2. Start rewarder (if using RL)
@@ -675,10 +675,10 @@ rtc_interpolation: cubic  # or linear
 
 ```bash
 # Watch queue size in real-time
-tail -f ~/.saoirse/logs/arm01.log | grep queue_size
+tail -f ~/.saorsa/logs/arm01.log | grep queue_size
 
 # Plot queue metrics
-python scripts/plot_queue_metrics.py ~/.saoirse/logs/arm01.log
+python scripts/plot_queue_metrics.py ~/.saorsa/logs/arm01.log
 ```
 
 ## 🔧 Troubleshooting
@@ -781,7 +781,7 @@ make hf-login
 # Upload dataset
 huggingface-cli upload-folder \
   ./data/20240315_pick_place_arm01_run001 \
-  saoirse/so101-pick-place \
+  saorsa/so101-pick-place \
   --repo-type=dataset
 
 # Download pretrained model
@@ -875,9 +875,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 📞 Support
 
 - **Documentation**: See `/docs` folder for detailed guides
-- **Issues**: [GitHub Issues](https://github.com/saoirse/saoirse-robotics/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/saoirse/saoirse-robotics/discussions)
-- **Email**: robotics@saoirse.ai
+- **Issues**: [GitHub Issues](https://github.com/saorsa/saorsa-robotics/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/saorsa/saorsa-robotics/discussions)
+- **Email**: robotics@saorsa.ai
 
 ## 🗺 Roadmap
 
@@ -902,4 +902,4 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-*Built with ❤️ by Saoirse Labs Robotics Team*
+*Built with ❤️ by Saorsa Labs Robotics Team*

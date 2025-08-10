@@ -1,4 +1,4 @@
-# Saoirse Labs — SO‑101 VLA Training Plan (Workshop Edition)
+# Saorsa Labs — SO‑101 VLA Training Plan (Workshop Edition)
 
 **Version:** 0.1 (living document)
 **Owners:** Saorsa Labs Robotics Team
@@ -63,7 +63,7 @@
 
 ### 2.3 Repository layout (summary)
 
-See **saoirse‑robotics/** scaffold: `robot/` (Mac), `policy_server/` (GPU), `rl/`, `ops/`.
+See **saorsa‑robotics/** scaffold: `robot/` (Mac), `policy_server/` (GPU), `rl/`, `ops/`.
 Environment variables live in `.env` (copy from `.env.example`).
 
 ---
@@ -193,7 +193,7 @@ Environment variables live in `.env` (copy from `.env.example`).
 * Prefer VPN/allow‑list; open only `POLICY_SERVER_PORT` and `REWARDER_PORT`.
 * Use SSH tunnels for ad‑hoc tests.
 * Keep robot Macs on isolated VLAN; policy server in a secure subnet.
-* Log IPs and auth tokens (if enabled) to `~/.saoirse/logs`.
+* Log IPs and auth tokens (if enabled) to `~/.saorsa/logs`.
 
 ---
 
