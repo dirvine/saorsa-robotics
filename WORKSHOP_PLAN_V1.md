@@ -24,20 +24,20 @@
 
 ## 1) System overview
 
-**Macs (near arms)** run LeRobot drivers + cameras + safety + async client.
+**Mac workstation** runs LeRobot drivers for all 4 arms + cameras + safety + async clients.
 **GPU Server** (Linux/NVIDIA) hosts a policy server (π/OpenVLA) and optional VLM rewarder.
-**RL loop** queries rewarder and updates policy (on server) while Macs execute action chunks.
+**RL loop** queries rewarder and updates policy (on server) while Mac executes action chunks for all arms.
 
 ```
-+-----------------+     WebSocket/HTTP      +-----------------------+
-|  Mac (arm01)    | <---------------------> |  GPU Policy Server    |
-|  LeRobot client |                          |  π0‑FAST / OpenVLA    |
-|  Cameras, safety|                          |  + RTC (optional)     |
-+-----------------+                          +-----------+-----------+
-       ...                                                 |
-+-----------------+                                       |
-|  Mac (arm04)    |                                       v
-+-----------------+                          +-----------------------+
++-----------------------+     WebSocket/HTTP      +-----------------------+
+|  MacBook Pro          | <---------------------> |  GPU Policy Server    |
+|  4x SO-101 Arms       |                          |  π0‑FAST / OpenVLA    |
+|  LeRobot clients      |                          |  + RTC (optional)     |
+|  Cameras, safety      |                          +-----------+-----------+
++-----------------------+                                      |
+                                                             |
+                                                             v
+                                             +-----------------------+
                                              |  VLM Rewarder (HTTP) |
                                              |  (e.g., Qwen‑VL)     |
                                              +-----------------------+
@@ -47,11 +47,11 @@
 
 ## 2) Environments & prerequisites
 
-### 2.1 macOS workstations (one per arm)
+### 2.1 macOS workstation (single unit for all arms)
 
 * Apple Silicon, macOS 14+, Python 3.10+, stable power + **physical E‑stop**.
-* **uv** for Python envs, **ffmpeg**, USB to the SO‑101 (powered hubs recommended).
-* Cameras: UVC webcams (preferred) or iPhone Continuity Camera. Keep lighting stable.
+* **uv** for Python envs, **ffmpeg**, USB connections to all 4 SO‑101 arms (powered hub required).
+* Cameras: Multiple UVC webcams (preferred) or iPhone Continuity Camera. Keep lighting stable.
 * Torch on macOS uses **MPS**; heavy models run remotely.
 
 ### 2.2 NVIDIA Linux GPU host (cloud or on‑prem)
@@ -107,14 +107,14 @@ Environment variables live in `.env` (copy from `.env.example`).
 
 ## 4) Standard Operating Procedures (SOPs)
 
-### SOP‑A: Arm bring‑up & calibration (per arm)
+### SOP‑A: Arm bring‑up & calibration (all arms on one Mac)
 
-1. Connect SO‑101 via powered USB hub.
+1. Connect all 4 SO‑101 arms via powered USB hub to single Mac.
 2. `make mac-bootstrap` on the Mac; confirm Torch/MPS availability via `scripts/check_mps.py`.
-3. Identify port with `lerobot-find-port`.
-4. Setup motors & calibration; assign `armID` (arm01..arm04).
-5. Edit `robot/configs/so101_armID.yaml` with `port`, camera, and safety file.
-6. Jog EE within **cartesian\_box**; confirm E‑stop.
+3. Identify all ports with `lerobot-find-port`.
+4. Setup motors & calibration for each arm; assign `armID` (arm01..arm04).
+5. Edit `robot/configs/so101_armID.yaml` for each arm with unique `port`, camera index, and safety file.
+6. Jog each EE within **cartesian\_box**; confirm E‑stop affects all arms.
 
 ### SOP‑B: Start policy server (GPU host)
 
@@ -308,7 +308,7 @@ Environment variables live in `.env` (copy from `.env.example`).
 
 ### C. YAML examples
 
-* `robot/configs/so101_armNN.yaml` — per‑arm port/camera/safety.
+* `robot/configs/so101_armNN.yaml` — unique port/camera for each arm, shared safety.
 * `robot/safety/ee_limits.yaml` — cartesian box + joint clamps.
 * `rl/configs/*.yaml` — task goal, actors, async, rewarder/policy URLs.
 

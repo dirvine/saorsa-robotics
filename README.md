@@ -8,7 +8,7 @@
 [![OpenPI](https://img.shields.io/badge/OpenPI-π0--FAST-purple)](https://github.com/Physical-Intelligence/openpi)
 
 This repository provides a complete, pragmatic setup for controlling multiple SO-101 robotic arms using:
-- **MacBook Pros** (near each arm): LeRobot drivers, cameras, safety limits, and async RobotClient
+- **MacBook Pro** (single workstation): LeRobot drivers for up to 4 arms, cameras, safety limits, and async RobotClient
 - **Remote NVIDIA GPU**: runs OpenPI (π0/π0-FAST) or OpenVLA-7B as a PolicyServer with optional RTC and VLM rewarder
 - **No imitation data required**: language-specified rewards (VLM) + on-robot RL; demonstrations are optional
 
@@ -39,7 +39,7 @@ git clone https://github.com/saorsa/saorsa-robotics.git
 cd saorsa-robotics
 cp .env.example .env  # Edit with your settings
 
-# 2. Mac setup (per arm)
+# 2. Mac setup (single workstation)
 make mac-bootstrap
 # Calibrate each SO-101 with LeRobot
 ARM_ID=arm01 make run-arm
@@ -60,15 +60,15 @@ make train-rl
 The system distributes computation optimally between edge devices and GPU servers:
 
 ```
-+-----------------+     WebSocket/HTTP      +-----------------------+
-|  Mac (arm01)    | <---------------------> |  GPU Policy Server    |
-|  LeRobot client |                          |  π0-FAST / OpenVLA    |
-|  Cameras, safety|                          |  + RTC (optional)     |
-+-----------------+                          +-----------+-----------+
-       ...                                                 |
-+-----------------+                                       |
-|  Mac (arm04)    |                                       v
-+-----------------+                          +-----------------------+
++-----------------------+     WebSocket/HTTP      +-----------------------+
+|  MacBook Pro          | <---------------------> |  GPU Policy Server    |
+|  4x SO-101 Arms       |                          |  π0-FAST / OpenVLA    |
+|  LeRobot clients      |                          |  + RTC (optional)     |
+|  Cameras, safety      |                          +-----------+-----------+
++-----------------------+                                      |
+                                                             |
+                                                             v
+                                             +-----------------------+
                                              |  VLM Rewarder (HTTP)  |
                                              |  (e.g., Qwen-VL)     |
                                              +-----------------------+
@@ -103,10 +103,10 @@ saorsa-robotics/
 
 ## 📋 Requirements
 
-### macOS Workstations (one per arm)
-- **Hardware**: Apple Silicon Mac (M1/M2/M3), macOS 14+
+### macOS Workstation (single unit for all arms)
+- **Hardware**: Apple Silicon Mac (M1/M2/M3), macOS 14+, powered USB hub for 4 arms
 - **Software**: Python 3.10+, uv package manager, ffmpeg
-- **Peripherals**: USB connection to SO-101, UVC webcam or iPhone Continuity Camera
+- **Peripherals**: USB connections to all 4 SO-101 arms, multiple UVC webcams or iPhone Continuity Cameras
 - **Safety**: Physical E-stop button (mandatory)
 
 ### NVIDIA GPU Server (Linux)
@@ -117,22 +117,22 @@ saorsa-robotics/
 - **Storage**: 0.5-1 TB for datasets and checkpoints
 
 ### Network Requirements
-- **Latency**: <50ms between Macs and GPU server (LAN preferred)
-- **Bandwidth**: 10+ Mbps per arm for video streaming
+- **Latency**: <50ms between Mac workstation and GPU server (LAN preferred)
+- **Bandwidth**: 40+ Mbps total for 4 arms video streaming (10 Mbps per arm)
 - **Security**: VPN or IP allowlist recommended
 
 ## 💻 Installation
 
-### Step 1: Mac Setup (per arm)
+### Step 1: Mac Setup (single workstation for all arms)
 
 ```bash
-# Install dependencies and LeRobot
+# Install dependencies and LeRobot on one Mac
 make mac-bootstrap
 
 # This will:
 # - Install uv package manager
 # - Set up Python environment
-# - Install LeRobot with Feetech drivers
+# - Install LeRobot with Feetech drivers for multiple arms
 # - Configure PyTorch for Apple Silicon (MPS)
 # - Install OpenCV and camera utilities
 
@@ -158,23 +158,26 @@ nvidia-smi  # Verify GPU access
 
 ### Step 3: Arm Calibration
 
-For each SO-101 arm:
+For each SO-101 arm (all connected to one Mac):
 
 ```bash
-# 1. Find USB port
-lerobot-find-port
+# 1. Find all USB ports
+lerobot-find-port  # Will show all connected arms
 
-# 2. Setup motors
-lerobot-setup-motors
+# 2. Setup motors for each arm
+lerobot-setup-motors --port /dev/tty.usbmodem1101  # arm01
+lerobot-setup-motors --port /dev/tty.usbmodem1102  # arm02
+lerobot-setup-motors --port /dev/tty.usbmodem1103  # arm03
+lerobot-setup-motors --port /dev/tty.usbmodem1104  # arm04
 
-# 3. Calibrate arm
-lerobot-calibrate
+# 3. Calibrate each arm
+lerobot-calibrate --port /dev/tty.usbmodem1101  # Repeat for each arm
 
-# 4. Update config file
+# 4. Update config files
 # Edit robot/configs/so101_armNN.yaml with:
-# - Correct USB port
-# - Camera settings
-# - Safety limits
+# - Correct USB port for each arm
+# - Individual camera settings
+# - Shared safety limits
 ```
 
 ### Step 4: Environment Configuration
@@ -205,12 +208,12 @@ The system is designed to achieve specific milestones in a workshop setting:
   - EE/joint limits defined
 
 ### M1 — SO-101 Bring-up (Day 1)
-- **Goal**: Individual arm control working
+- **Goal**: All four arms controlled from single Mac
 - **Deliverables**:
-  - Each arm calibrated
-  - Jogging verified
-  - Camera feeds operational
-  - Config files populated
+  - All 4 arms calibrated and connected via USB hub
+  - Jogging verified for each arm
+  - Camera feeds operational for all arms
+  - Config files populated for arm01-arm04
 
 ### M2 — Remote Policy Server (Day 1-2)
 - **Goal**: GPU inference online
@@ -244,7 +247,7 @@ The system is designed to achieve specific milestones in a workshop setting:
 - **Goal**: Multiple tasks and actors
 - **Deliverables**:
   - 3 tasks at ≥80% success
-  - 4 arms operating concurrently
+  - All 4 arms operating concurrently from single Mac
   - Evaluation dashboard active
 
 ## 📘 Standard Operating Procedures
@@ -252,24 +255,24 @@ The system is designed to achieve specific milestones in a workshop setting:
 ### SOP-A: Arm Bring-up & Calibration
 
 ```bash
-# 1. Connect SO-101 via powered USB hub
+# 1. Connect all 4 SO-101 arms via powered USB hub to single Mac
 # 2. Bootstrap Mac environment
 make mac-bootstrap
 
-# 3. Find and configure port
+# 3. Find all ports
 lerobot-find-port
-# Note the port (e.g., /dev/tty.usbmodem1101)
+# Note all ports (e.g., /dev/tty.usbmodem1101-1104)
 
-# 4. Setup and calibrate
-lerobot-setup-motors
-lerobot-calibrate
+# 4. Setup and calibrate each arm
+lerobot-setup-motors --port /dev/tty.usbmodem1101  # Repeat for each
+lerobot-calibrate --port /dev/tty.usbmodem1101     # Repeat for each
 
-# 5. Update configuration
-# Edit robot/configs/so101_armNN.yaml
-# Set port, camera, and safety limits
+# 5. Update configuration for each arm
+# Edit robot/configs/so101_arm01.yaml through so101_arm04.yaml
+# Set unique ports, camera indices, shared safety limits
 
-# 6. Test with jogging
-# Verify E-stop functionality
+# 6. Test jogging for each arm
+# Verify E-stop affects all arms
 ```
 
 ### SOP-B: Start Policy Server
@@ -289,15 +292,18 @@ curl http://localhost:8080/health
 ### SOP-C: Async Client Operation
 
 ```bash
-# On Mac:
+# On Mac (single workstation):
 # 1. Configure environment
 source .env
 
-# 2. Launch client for specific arm
-ARM_ID=arm01 make run-arm
+# 2. Launch clients for all arms (separate terminals)
+ARM_ID=arm01 make run-arm  # Terminal 1
+ARM_ID=arm02 make run-arm  # Terminal 2  
+ARM_ID=arm03 make run-arm  # Terminal 3
+ARM_ID=arm04 make run-arm  # Terminal 4
 
 # 3. Monitor performance
-# Check logs in ~/.saorsa/logs/arm01.log
+# Check logs in ~/.saorsa/logs/armNN.log
 # Adjust ACTIONS_PER_CHUNK if needed
 ```
 
@@ -403,10 +409,11 @@ make serve-pi
 # 2. Start rewarder (if using RL)
 make serve-rewarder
 
-# 3. Launch robot clients (on each Mac)
-ARM_ID=arm01 make run-arm
-ARM_ID=arm02 make run-arm
-# ... for each arm
+# 3. Launch robot clients (on Mac, one terminal per arm)
+ARM_ID=arm01 make run-arm  # Terminal 1
+ARM_ID=arm02 make run-arm  # Terminal 2
+ARM_ID=arm03 make run-arm  # Terminal 3  
+ARM_ID=arm04 make run-arm  # Terminal 4
 
 # 4. Begin task execution or training
 make train-rl
