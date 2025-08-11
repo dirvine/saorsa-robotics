@@ -131,8 +131,8 @@ make mac-bootstrap
 
 # This will:
 # - Install uv package manager
-# - Set up Python environment
-# - Install LeRobot with Feetech drivers for multiple arms
+# - Set up Python environment  
+# - Install LeRobot from PyPI with Feetech + async extras for multiple arms
 # - Configure PyTorch for Apple Silicon (MPS)
 # - Install OpenCV and camera utilities
 
@@ -296,7 +296,10 @@ curl http://localhost:8080/health
 # 1. Configure environment
 source .env
 
-# 2. Launch clients for all arms (separate terminals)
+# 2a. Launch all clients at once (convenience)
+make run-all-arms
+
+# 2b. Or launch clients individually (separate terminals)
 ARM_ID=arm01 make run-arm  # Terminal 1
 ARM_ID=arm02 make run-arm  # Terminal 2  
 ARM_ID=arm03 make run-arm  # Terminal 3

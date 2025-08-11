@@ -5,7 +5,8 @@ cd "$(dirname "$0")"
 # Load env
 if [ -f ../.env ]; then set -a; source ../.env; set +a; fi
 HOST="${POLICY_SERVER_HOST:-0.0.0.0}"
-PORT="${POLICY_SERVER_PORT:-8080}"
+# Add support for per-arm port overrides
+PORT="${1:-${POLICY_SERVER_PORT:-8080}}"
 
 # We assume OpenPI is installed on the GPU host under $HOME/openpi
 OPENPI_DIR="${OPENPI_DIR:-$HOME/openpi}"

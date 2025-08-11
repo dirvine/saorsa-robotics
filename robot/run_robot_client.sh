@@ -25,12 +25,19 @@ print(json.dumps(cfg['robot']['cameras']))
 PY
 )
 
+# Per-arm environment overrides
+ARM_UPPER=$(echo "$ARM_ID" | tr '[:lower:]' '[:upper:]')
+POLICY_PORT_VAR="${ARM_UPPER}_POLICY_PORT"
+CAM_INDEX_VAR="${ARM_UPPER}_CAM_INDEX"
+ARM_POLICY_PORT="${!POLICY_PORT_VAR:-$POLICY_SERVER_PORT}"
+ARM_CAM_INDEX="${!CAM_INDEX_VAR:-0}"
+
 APC=${ACTIONS_PER_CHUNK:-40}
 CST=${CHUNK_SIZE_THRESHOLD:-0.6}
 
 # Launch LeRobot RobotClient toward remote PolicyServer (OpenPI/OpenVLA)
 python -m lerobot.scripts.server.robot_client \
-  --server_address="${POLICY_SERVER_HOST:-127.0.0.1}:${POLICY_SERVER_PORT:-8080}" \
+  --server_address="${POLICY_SERVER_HOST:-127.0.0.1}:${ARM_POLICY_PORT:-8080}" \
   --robot.type=so101_follower \
   --robot.port="$PORT" \
   --robot.id="$ARM_ID" \

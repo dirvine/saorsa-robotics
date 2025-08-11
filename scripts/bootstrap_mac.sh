@@ -19,10 +19,8 @@ source .venv/bin/activate
 # Core Python deps from pyproject
 uv pip install -e .
 
-# Install LeRobot with Feetech + async extras (macOS I/O)
-uv pip install "lerobot[feetech]"
-# async utilities typically included with recent LeRobot; install explicit if needed
-# uv pip install "lerobot[async]"
+# LeRobot from PyPI with Feetech + async extras
+uv pip install 'lerobot[feetech,async]'
 
 # OpenCV preview utils
 if ! command -v ffmpeg >/dev/null 2>&1; then
