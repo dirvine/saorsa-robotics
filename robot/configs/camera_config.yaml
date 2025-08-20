@@ -1,0 +1,44 @@
+# Camera configuration for SO-101 arms
+cameras:
+  wrist_camera:
+    type: "usb"
+    device_id: 0
+    resolution: [640, 480]
+    fps: 30
+    position: "wrist"
+    calibration_file: "robot/configs/wrist_cam_calib.yaml"
+    
+  overhead_camera:
+    type: "usb"
+    device_id: 1
+    resolution: [1920, 1080]
+    fps: 30
+    position: "overhead"
+    calibration_file: "robot/configs/overhead_cam_calib.yaml"
+    
+  realsense_camera:
+    type: "realsense"
+    serial: ""  # Leave empty for auto-detect
+    resolution: [640, 480]
+    fps: 30
+    enable_depth: true
+    position: "side"
+    calibration_file: "robot/configs/realsense_calib.yaml"
+
+recording:
+  output_dir: "data/demonstrations"
+  format: "mp4"
+  codec: "h264"
+  save_depth: true
+  save_metadata: true
+  
+synchronization:
+  use_timestamps: true
+  buffer_size: 10
+  sync_tolerance_ms: 50
+  
+vla_integration:
+  action_chunking_size: 64
+  observation_history: 3
+  camera_keys: ["wrist_camera", "overhead_camera"]
+  resize_to: [224, 224]
