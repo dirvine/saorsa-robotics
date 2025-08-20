@@ -41,3 +41,27 @@ serve-pi-arm04:
 
 train-rl:
 	cd rl && ./run_hilserl.sh
+# Camera commands
+calibrate-camera:
+	@echo "Calibrating camera..."
+	python scripts/calibrate_cameras.py --camera 0
+
+calibrate-all-cameras:
+	@echo "Calibrating all cameras..."
+	python scripts/calibrate_cameras.py --camera 0 --output robot/configs/cam0_calib.yaml
+	python scripts/calibrate_cameras.py --camera 1 --output robot/configs/cam1_calib.yaml
+
+collect-demos:
+	@echo "Starting demonstration collection..."
+	python scripts/collect_demonstrations.py
+
+test-camera:
+	@echo "Testing camera connection..."
+	python -c "import cv2; cap = cv2.VideoCapture(0); print('Camera 0:', 'OK' if cap.isOpened() else 'NOT FOUND'); cap.release()"
+	python -c "import cv2; cap = cv2.VideoCapture(1); print('Camera 1:', 'OK' if cap.isOpened() else 'NOT FOUND'); cap.release()"
+
+install-camera-deps:
+	@echo "Installing camera dependencies..."
+	pip install opencv-python opencv-contrib-python pyrealsense2 imageio imageio-ffmpeg
+
+.PHONY: calibrate-camera calibrate-all-cameras collect-demos test-camera install-camera-deps

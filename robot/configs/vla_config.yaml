@@ -1,0 +1,27 @@
+# VLA Model Configuration
+vla:
+  model_type: "pi0_fast"  # Options: pi0_fast, openvla
+  server_url: "${VLA_SERVER_URL}"  # Set in .env
+  timeout: 0.1  # 100ms max latency
+  action_chunk_size: 64
+  observation_history: 3
+  image_size: [224, 224]
+  normalize_images: true
+  
+  action_scaling: 0.1
+  safety_limits:
+    max_joint_velocity: 1.0
+    max_gripper_force: 10.0
+    
+  inference_rate: 10  # Hz
+  buffer_size: 128
+  
+camera_integration:
+  primary_camera: "wrist_camera"
+  auxiliary_cameras: ["overhead_camera"]
+  frame_skip: 3
+  
+control:
+  use_action_chunking: true
+  fallback_to_teleoperation: true
+  smooth_transitions: true
