@@ -1,0 +1,29 @@
+[package]
+name = "kyutai-stt-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+tokio = { version = "1.38", features = ["full"] }
+cpal = "0.15"
+rdev = "0.5"
+enigo = "0.2"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+hound = "3.5"
+
+# Candle (pin to a recent known series; adjust as needed)
+candle-core = "0.9"
+candle-nn = "0.9"
+candle-transformers = "0.9"
+hf-hub = "0.4"
+tokenizers = "0.22"
+reqwest = { version = "0.12", features = ["blocking", "json", "rustls-tls"] }
+tempfile = "3.10"
+dirs = "5.0"
+safetensors = "0.4"
+bytemuck = { version = "1.16", features = ["extern_crate_alloc"] }

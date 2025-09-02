@@ -9,7 +9,6 @@ import asyncio
 import aiofiles
 import cv2
 import numpy as np
-import numpy.typing as npt
 import json
 import time
 import pickle
@@ -17,7 +16,7 @@ import logging
 from pathlib import Path
 from datetime import datetime
 import yaml
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor

@@ -404,7 +404,7 @@ def main() -> None:
         if len(pattern_parts) != 2:
             raise ValueError("Pattern must be in format WxH (e.g., 9x6)")
         pattern_size = (int(pattern_parts[0]), int(pattern_parts[1]))
-    except (ValueError, IndexError) as e:
+    except (ValueError, IndexError):
         logger.error(f"Invalid pattern format: {args.pattern}")
         sys.exit(1)
     

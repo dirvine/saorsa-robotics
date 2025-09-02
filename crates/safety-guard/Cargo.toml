@@ -1,0 +1,34 @@
+[package]
+name = "safety-guard"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["dsl", "watchdogs"]
+dsl = []
+watchdogs = ["tokio", "async-trait"]
+gpio = ["rppal"]  # Raspberry Pi GPIO support
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+time.workspace = true
+anyhow.workspace = true
+
+# Async support for watchdogs
+tokio = { version = "1.0", features = ["full"], optional = true }
+async-trait = { version = "0.1", optional = true }
+
+# GPIO support (optional)
+rppal = { version = "0.16", optional = true }
+
+# Expression evaluation for DSL
+evalexpr = "11.0"
+
+# VLA policy integration
+vla-policy = { path = "../vla-policy", default-features = false }

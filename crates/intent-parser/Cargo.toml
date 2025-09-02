@@ -1,0 +1,21 @@
+[package]
+name = "intent-parser"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+regex = "1.10"
+anyhow.workspace = true
+
+# VLA policy integration
+vla-policy = { path = "../vla-policy", default-features = false }
+
+# Device registry for joint control
+device-registry = { path = "../device-registry", default-features = false }

@@ -1,6 +1,21 @@
 SHELL := /bin/bash
 
 .PHONY: mac-bootstrap gpu-bootstrap serve-pi serve-rewarder run-arm run-all-arms serve-pi-arm01 serve-pi-arm02 serve-pi-arm03 serve-pi-arm04 train-rl hf-login
+.PHONY: rust-build rust-fmt rust-clippy rust-all
+.
+.PHONY: stt-moshi-bootstrap stt-moshi-serve
+stt-moshi-bootstrap:
+	@echo "[stt] Bootstrapping Kyutai Moshi"
+	./stt/bootstrap_moshi.sh
+
+stt-moshi-serve:
+	@echo "[stt] Serving Kyutai Moshi"
+	./stt/serve_moshi.sh
+
+.PHONY: run-kyutai-stt-app
+run-kyutai-stt-app:
+	@echo "[voice] Running Kyutai STT hotkey app"
+	cargo run -p kyutai-stt-app -- --config config.json --hotkey F12 --duration 5
 
 mac-bootstrap:
 	@echo "[mac] Installing uv, lerobot + extras, and basics"
@@ -65,3 +80,15 @@ install-camera-deps:
 	pip install opencv-python opencv-contrib-python pyrealsense2 imageio imageio-ffmpeg
 
 .PHONY: calibrate-camera calibrate-all-cameras collect-demos test-camera install-camera-deps
+
+# Rust workspace helpers
+rust-build:
+	cargo build --workspace --all-targets
+
+rust-fmt:
+	cargo fmt --all
+
+rust-clippy:
+	cargo clippy --all-features -- -D clippy::panic -D clippy::unwrap_used -D clippy::expect_used
+
+rust-all: rust-fmt rust-build rust-clippy

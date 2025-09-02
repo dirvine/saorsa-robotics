@@ -1,0 +1,24 @@
+[package]
+name = "brain-daemon"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["audio"]
+audio = []
+
+[dependencies]
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+clap = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["full"] }
+voice-local = { path = "../../crates/voice-local", features = ["kyutai_moshi", "audio"] }
+vla-policy = { path = "../../crates/vla-policy", default-features = false }
+safety-guard = { path = "../../crates/safety-guard", features = ["watchdogs"] }
+continual-learning = { path = "../../crates/continual-learning", default-features = false, features = ["data-collection"] }
+intent-parser = { path = "../../crates/intent-parser" }
+

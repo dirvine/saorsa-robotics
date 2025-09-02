@@ -1,0 +1,32 @@
+[package]
+name = "voice-local"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["mock"]
+mock = []
+# Placeholders for future integrations
+whisper_cpp = []
+faster_whisper = []
+vosk = []
+audio = ["dep:cpal"]
+kyutai_moshi = ["dep:reqwest", "dep:tempfile", "dep:hound", "dep:hf-hub", "dep:tokenizers", "dep:dirs"]
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+time.workspace = true
+anyhow.workspace = true
+cpal = { version = "0.15", optional = true }
+reqwest = { version = "0.12", features = ["blocking", "json", "rustls-tls"], optional = true }
+tempfile = { version = "3.10", optional = true }
+hound = { version = "3.5", optional = true }
+hf-hub = { version = "0.3", optional = true }
+tokenizers = { version = "0.19", optional = true }
+dirs = { version = "5.0", optional = true }
