@@ -1856,8 +1856,8 @@ impl Policy for CustomVlaPolicy {
 #### Community Support
 - 💬 **GitHub Discussions**: Ask questions and share ideas
 - 🐛 **GitHub Issues**: Report bugs and request features
-- 📧 **Email**: robotics@saorsa.ai
-- 🌐 **Website**: https://saorsa.ai/robotics
+- 📧 **Email**: saorsalabs@gmail.com
+- 🌐 **Website**: https://saorsalabs.com
 
 ### Contributing
 
