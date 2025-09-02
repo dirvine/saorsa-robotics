@@ -2754,7 +2754,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - **Documentation**: See `/docs` folder for detailed guides
 - **Issues**: [GitHub Issues](https://github.com/saorsa/saorsa-robotics/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/saorsa/saorsa-robotics/discussions)
-- **Email**: robotics@saorsa.ai
+- **Email**: saorsalabs.gmail.com
 
 ## 🗺 Roadmap
 
