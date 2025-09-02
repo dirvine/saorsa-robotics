@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  rust:
+    name: Rust Build, Fmt, Clippy
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        env:
+          RUSTFLAGS: -D warnings
+        run: |
+          cargo build --workspace --all-targets
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (strict)
+        run: |
+          cargo clippy --all-features -- -D clippy::panic -D clippy::unwrap_used -D clippy::expect_used
+

@@ -3,125 +3,257 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Saorsa Robotics provides a production-ready scaffold for training Hugging Face SO-101 robotic arms using Vision-Language-Action (VLA) policies without demonstrations. The system uses a single MacBook Pro to control up to 4 arms, with remote NVIDIA GPU servers running policy models (π0-FAST/OpenVLA).
+Saorsa Robotics is a complete AI robotics platform with CAN bus control, computer vision, voice commands, and continual learning. The system consists of a Rust workspace with safety-critical components for robot control and Python services for AI/ML inference.
 
-## Key Commands
+## Architecture
 
-### Mac Setup & Development
+### System Components
+- **Rust Core (Workspace)**: Safety-critical real-time control
+  - `can-transport`: CAN bus communication (SocketCAN/USB-CAN)
+  - `device-registry`: Robot device abstractions (ODrive, T-Motor, CANopen)
+  - `vision-stereo`: Camera backends (DepthAI, RealSense, OpenCV)
+  - `voice-local`: Local ASR/TTS (whisper, Chatterbox)
+  - `vla-policy`: Vision-Language-Action policy interface
+  - `safety-guard`: Hardware safety limits and E-stop
+  - `continual-learning`: Online model improvement
+  - `intent-parser`: Natural language command parsing
+  
+- **Applications**: 
+  - `brain-daemon`: Main orchestrator daemon
+  - `sr-cli`: Command-line interface
+  - `kyutai-stt-app`: Speech-to-text hotkey app
+  - Various demo apps for testing subsystems
+
+- **Python Services**:
+  - Policy server: OpenVLA/π0-FAST inference on GPU
+  - VLM rewarder: Language-based reward generation
+  - Robot client: LeRobot control with async action chunking
+  - Camera calibration and demonstration collection tools
+
+### Deployment Architecture
+- **Mac Workstation**: Controls 1-4 SO-101 arms via USB, runs Rust control stack
+- **GPU Server**: Runs policy models as HTTP services (π0-FAST/OpenVLA)
+- **Network**: Action chunking handles up to 150ms latency
+
+## Development Commands
+
+### Build & Test (Rust)
 ```bash
-# Bootstrap Mac environment (installs uv, LeRobot with Feetech/async extras, PyTorch)
-make mac-bootstrap
+# Full Rust workspace build
+cargo build --workspace --all-targets
 
-# Run individual arm (ARM_ID: arm01, arm02, arm03, arm04)
-ARM_ID=arm01 make run-arm
+# Run all tests (must pass with zero failures)
+cargo test --all
 
-# Run all 4 arms concurrently from single Mac
-make run-all-arms
+# Format code (required before commit)
+cargo fmt --all
 
-# Calibrate arms (after USB connection)
-lerobot-find-port                              # Find all connected arms
-lerobot-setup-motors --port /dev/tty.usbmodem1101  # Setup each arm
-lerobot-calibrate --port /dev/tty.usbmodem1101     # Calibrate each arm
+# Lint with clippy (zero warnings enforced)
+cargo clippy --all-features -- -D clippy::panic -D clippy::unwrap_used -D clippy::expect_used
+
+# Combined quality check
+make rust-all  # Runs fmt, build, clippy
 ```
 
-### GPU Server Operations
+### Robot Control
 ```bash
-# Bootstrap GPU server (installs Docker, OpenPI)
+# Bootstrap Mac environment (installs uv, LeRobot, PyTorch)
+make mac-bootstrap
+
+# Find and calibrate arms (after USB connection)
+lerobot-find-port                                  # List all connected arms
+lerobot-setup-motors --port /dev/tty.usbmodem1101  # Configure motors
+lerobot-calibrate --port /dev/tty.usbmodem1101     # Calibrate position
+
+# Run single arm
+ARM_ID=arm01 make run-arm
+
+# Run all 4 arms concurrently
+make run-all-arms
+```
+
+### GPU Server Setup
+```bash
+# Bootstrap GPU server (Docker + CUDA)
 make gpu-bootstrap
 
 # Serve policy models
-make serve-pi                 # Default π0-FAST on port 8080
-make serve-pi-arm01           # Arm-specific on port 8081
-make serve-rewarder          # VLM rewarder on port 18080
+make serve-pi              # π0-FAST on port 8080
+make serve-pi-arm01        # Per-arm servers (8081-8084)
+make serve-rewarder        # VLM rewarder on port 18080
 ```
 
-### Training & Evaluation
+### Camera Operations
 ```bash
-# Start RL training
+# Test camera connections
+make test-camera
+
+# Calibrate cameras (generates calib YAML)
+make calibrate-camera        # Single camera
+make calibrate-all-cameras   # All cameras
+
+# Collect demonstrations
+make collect-demos
+
+# Install camera dependencies
+make install-camera-deps
+```
+
+### Voice/STT
+```bash
+# Bootstrap Kyutai Moshi STT
+make stt-moshi-bootstrap
+
+# Serve Moshi STT server
+make stt-moshi-serve
+
+# Run STT hotkey app (F12 default)
+make run-kyutai-stt-app
+```
+
+### Training & Learning
+```bash
+# Start RL training with HIL-SERL
 make train-rl
 
-# Hugging Face integration
+# Hugging Face login for model access
 make hf-login
 ```
 
 ### Testing & Validation
 ```bash
-# Check Apple Silicon GPU availability
-python scripts/check_mps.py
+# Check Apple Silicon GPU (MPS) availability
+python3 scripts/check_mps.py
 
-# Lint/format (when available)
+# Python linting/formatting
 ruff check .
-black .
+black . --line-length 100
 ```
 
-## Architecture & Key Design Patterns
+## Critical Safety & Quality Requirements
 
-### Distributed System Architecture
-- **Single Mac Workstation**: Controls all 4 SO-101 arms via USB hub, runs LeRobot clients with async inference
-- **Remote GPU Server**: Runs policy models (π0-FAST/OpenVLA) as HTTP services
-- **VLM Rewarder**: Optional service for language-based reward generation in no-demo training
+### Rust Code Standards (ZERO TOLERANCE)
+- **NO `unwrap()` or `expect()` in production code** (OK in tests only)
+- **NO `panic!()`, `todo!()`, `unimplemented!()`**
+- **Zero clippy warnings** (`cargo clippy -- -D warnings`)
+- **All unsafe code requires justification**
+- **100% test pass rate required**
 
-### Async Control Flow
-The system uses action chunking with async inference to maintain smooth control despite network latency:
-1. Robot client requests action chunks from policy server (40 actions default)
-2. Actions execute from queue while next chunk is predicted
-3. Queue refills at threshold (60% default) to prevent underflow
-4. Real-Time Chunking (RTC) optionally smooths transitions between chunks
+### Safety Systems
+- Physical E-stop required for all robot operations
+- Workspace limits enforced in `robot/safety/ee_limits.yaml`
+- CAN heartbeat monitoring (20ms timeout)
+- Human supervision mandatory during training
 
-### Per-Arm Configuration
-Each arm has independent configuration but shares safety limits:
+## Configuration
+
+### Environment Variables (`.env`)
+```bash
+# Policy server (GPU)
+POLICY_SERVER_HOST=127.0.0.1
+POLICY_SERVER_PORT=8080
+
+# Per-arm configuration
+ARM01_POLICY_PORT=8081  # Per-arm policy ports
+ARM01_CAM_INDEX=0       # Camera assignments
+
+# Action chunking (latency compensation)
+ACTIONS_PER_CHUNK=40        # Actions per inference
+CHUNK_SIZE_THRESHOLD=0.6    # Queue refill threshold
+
+# Logging
+LOG_DIR=$HOME/.saorsa/logs
+```
+
+### Per-Arm Config Files
 - `robot/configs/so101_armNN.yaml`: USB port, camera settings
 - `robot/safety/ee_limits.yaml`: Shared workspace boundaries
-- Environment vars: `ARMNN_POLICY_PORT`, `ARMNN_CAM_INDEX`
+- Device registry: `configs/devices/*.yaml` for robot definitions
+
+## Key Implementation Patterns
+
+### Action Chunking (Async Control)
+Compensates for network latency with predictive action queuing:
+1. Request 40 actions from policy server
+2. Execute from queue while predicting next chunk
+3. Refill at 60% threshold to prevent stutter
+4. Optional RTC smooths chunk transitions
+
+### CAN Bus Protocol Support
+- **CANopen**: CiA-402 device profiles
+- **CANSimple**: ODrive protocol
+- **T-Motor**: AK series proprietary
+- **Cyphal/UAVCAN**: Aerospace standard
 
 ### No-Demonstration Training
-Uses VLM-based rewards instead of human demonstrations:
-- Language goals specify tasks
-- VLM scores frames against goals
-- On-robot RL with safety interventions
-- HIL-SERL integration for sample efficiency
-
-## Critical Implementation Details
-
-### USB Port Management
-- All 4 arms connect to single Mac via powered USB hub
-- Ports typically: `/dev/tty.usbmodem1101-1104`
-- Each arm must be calibrated individually after connection
-
-### Network Latency Handling
-- Target latency: <50ms LAN, <150ms acceptable
-- Action chunking compensates for latency
-- Adjust `ACTIONS_PER_CHUNK` and `CHUNK_SIZE_THRESHOLD` based on network
-
-### Safety Constraints
-- Physical E-stop mandatory for all arms
-- Cartesian workspace limits enforced in `ee_limits.yaml`
-- Joint angle limits per arm
-- Human supervision required during training
-
-### Environment Variables
-Key variables from `.env`:
-- `POLICY_SERVER_HOST/PORT`: GPU server endpoint
-- `ACTIONS_PER_CHUNK`: Actions per inference (default 40)
-- `CHUNK_SIZE_THRESHOLD`: Queue refill threshold (default 0.6)
-- `ARMNN_POLICY_PORT`: Per-arm policy server ports (8081-8084)
+- VLM generates rewards from language goals
+- On-robot RL with safety constraints
+- HIL-SERL for sample efficiency
+- Optional human demonstrations
 
 ## Common Workflows
 
-### Adding New Task
-1. Create task config in `rl/configs/task_name.yaml`
-2. Define goal text and rewarder settings
-3. Configure actors (which arms to use)
-4. Run with `make train-rl`
+### Adding New Robot Type
+1. Create device descriptor in `configs/devices/robot_name.yaml`
+2. Implement driver in `crates/device-registry/src/drivers/`
+3. Add safety limits to `robot/safety/`
+4. Test with `apps/safety-demo`
 
 ### Debugging Control Issues
-1. Check queue health: `tail -f ~/.saorsa/logs/armNN.log | grep queue_size`
-2. Monitor latency: `python scripts/measure_latency.py`
-3. Adjust chunking parameters if stuttering occurs
-4. Enable RTC if seeing pauses at chunk boundaries
+```bash
+# Monitor action queue health
+tail -f ~/.saorsa/logs/arm01.log | grep queue_size
 
-### Scaling to Multiple Arms
-1. Connect all arms via powered USB hub
-2. Run `lerobot-find-port` to identify ports
-3. Update each `robot/configs/so101_armNN.yaml` with correct port
-4. Launch with `make run-all-arms` or individual `ARM_ID=armNN make run-arm`
+# Check CAN bus traffic
+candump can0  # Linux
+# or use sr-cli can monitor
+
+# Measure network latency
+python3 scripts/measure_latency.py
+
+# Adjust chunking if stuttering
+# Increase ACTIONS_PER_CHUNK or decrease CHUNK_SIZE_THRESHOLD
+```
+
+### Training New Task
+1. Define task in `rl/configs/task_name.yaml`
+2. Set language goal and reward function
+3. Configure safety constraints
+4. Run `make train-rl` with supervision
+
+### Running Tests
+```bash
+# Run specific test
+cargo test test_name
+
+# Run tests for specific crate
+cargo test -p can-transport
+
+# Run with output for debugging
+cargo test -- --nocapture
+
+# Run single threaded (for hardware tests)
+cargo test -- --test-threads=1
+```
+
+## Project Structure
+```
+.
+├── crates/           # Rust workspace libraries
+├── apps/            # Rust applications
+├── robot/           # Python robot control (LeRobot)
+├── policy_server/   # GPU inference services
+├── rl/              # Reinforcement learning configs
+├── stt/             # Speech-to-text services
+├── scripts/         # Utility scripts
+├── configs/         # Device and calibration configs
+└── docs/            # Architecture documentation
+```
+
+## Important Files
+- `Cargo.toml`: Rust workspace configuration
+- `Makefile`: Primary build orchestration
+- `.env.example`: Environment variable template
+- `docs/SPEC.md`: Complete system specification
+- `robot/configs/`: Per-arm and camera configurations
+- `robot/safety/ee_limits.yaml`: Safety constraints

@@ -1,0 +1,39 @@
+[package]
+name = "vla-policy"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["mock"]
+mock = []
+openvla = ["dep:pyo3", "dep:reqwest"]
+molmoact = ["dep:pyo3"]
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+time.workspace = true
+anyhow.workspace = true
+
+# Python integration
+pyo3 = { version = "0.22", features = ["auto-initialize"], optional = true }
+reqwest = { version = "0.12", features = ["json"], optional = true }
+
+# Async traits
+async-trait = "0.1"
+
+# Random number generation for mock
+rand = "0.8"
+
+# Optional: local model support
+candle-core = { version = "0.6", optional = true }
+candle-nn = { version = "0.6", optional = true }
+candle-transformers = { version = "0.6", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }

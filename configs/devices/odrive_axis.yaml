@@ -1,0 +1,17 @@
+id: odrive_axis0
+bus: can0
+protocol: odrive
+node_id: 0x10
+joints:
+  - name: axis0
+    limits: { pos_deg: [-180, 180], vel_dps: 360, torque_nm: 5 }
+    map:
+      mode: position
+      frames:
+        - id: 0x00C
+          fmt: odrive_set_pos
+telemetry:
+  - id: 0x00E
+    fmt: odrive_get_state
+heartbeat: { id: 0x700, period_ms: 50 }
+

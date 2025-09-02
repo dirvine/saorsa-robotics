@@ -1,0 +1,37 @@
+[package]
+name = "continual-learning"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["data-collection", "reward-modeling"]
+data-collection = ["tokio", "async-trait", "serde_json"]
+reward-modeling = ["tokio", "async-trait", "serde_json"]
+oft = ["tokio", "async-trait", "serde_json", "reqwest"]
+model-registry = ["tokio", "async-trait", "serde_json", "reqwest"]
+intervention-learning = ["tokio", "async-trait", "serde_json"]
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, optional = true }
+time.workspace = true
+anyhow.workspace = true
+
+# Async support
+tokio = { version = "1.0", features = ["full"], optional = true }
+async-trait = { version = "0.1", optional = true }
+
+# HTTP client for model registry
+reqwest = { version = "0.12", features = ["json"], optional = true }
+
+# Data structures
+uuid = { version = "1.0", features = ["v4", "serde"] }
+parking_lot = "0.12"
+
+# VLA policy integration
+vla-policy = { path = "../vla-policy", default-features = false }

@@ -1,0 +1,18 @@
+id: t_motor_ak80_9
+bus: can0
+protocol: tmotor_ak
+node_id: 0x01
+joints:
+  - name: hip_yaw
+    limits: { pos_deg: [-60, 60], vel_dps: 300, torque_nm: 25 }
+    map:
+      mode: torque
+      scale: { k_t: 0.12 }
+      pd: { kp: 60.0, kd: 1.0 }
+      frames:
+        - id: 0x140
+          fmt: tmotor_cmd
+telemetry:
+  - id: 0x240
+    fmt: tmotor_state
+heartbeat: { id: 0x700, period_ms: 20 }

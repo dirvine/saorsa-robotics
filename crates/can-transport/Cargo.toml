@@ -1,0 +1,27 @@
+[package]
+name = "can-transport"
+version = "0.1.0"
+description = "Abstractions and backends for CAN transport across platforms."
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["mock"]
+mock = []
+socketcan = []
+slcan = ["dep:serialport"]
+gs_usb = []
+vendor_kvaser = []
+vendor_pcan = []
+vendor_intrepid = []
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+time.workspace = true
+serialport = { version = "4", optional = true }
+
+[dev-dependencies]
+anyhow.workspace = true

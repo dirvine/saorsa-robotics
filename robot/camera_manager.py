@@ -13,16 +13,12 @@ import asyncio
 import threading
 import time
 import yaml
-import json
 import logging
-from typing import Dict, Optional, Union, List, Tuple, Any, Protocol
-from dataclasses import dataclass, field
+from typing import Dict, Optional, Union, List, Tuple, Any
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
-import os
 
 # Configure logging
 logging.basicConfig(
@@ -331,7 +327,7 @@ class RealSenseCamera(CameraInterface):
             )
             
             # Start pipeline
-            profile = self.pipeline.start(config)
+            self.pipeline.start(config)
             
             # Align depth to color
             align_to = rs.stream.color
@@ -909,12 +905,13 @@ async def camera_robot_sync_example() -> None:
             # Process frames for VLA model (async)
             if frames:
                 # Prepare observation for policy
-                observation = {
-                    'images': frames,
-                    'timestamp': current_time
-                }
+                # observation = {
+                #     'images': frames,
+                #     'timestamp': current_time
+                # }
                 # Here you would send to policy server asynchronously
                 # action = await policy_client.get_action(observation)
+                pass
             
             # Sleep to maintain control rate
             elapsed = time.time() - loop_start
