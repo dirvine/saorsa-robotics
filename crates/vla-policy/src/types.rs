@@ -10,13 +10,13 @@ pub struct Observation {
     pub image_shape: (u32, u32, u32),
     /// Optional aligned depth image (millimeters), row-major HxW
     #[serde(default)]
-    pub depth_u16: Option<Vec<u16>>, 
+    pub depth_u16: Option<Vec<u16>>,
     /// Optional depth image shape (height, width)
     #[serde(default)]
     pub depth_shape: Option<(u32, u32)>,
     /// Optional DOF mask: 1 byte per joint (1 = enabled), for interop with external policies
     #[serde(default)]
-    pub dof_mask: Option<Vec<u8>>, 
+    pub dof_mask: Option<Vec<u8>>,
     /// Optional dataset/source name for interop/testing (e.g., "lerobot")
     #[serde(default)]
     pub dataset_name: Option<String>,
@@ -29,8 +29,8 @@ pub struct Observation {
     /// Optional camera extrinsics: 4x4 row-major homogeneous transform camera_T_base
     /// Defines a transform from base frame to camera frame.
     /// If provided, grasp poses computed in camera frame can be mapped to base.
-    #[serde(default)]
-    pub camera_T_base: Option<[f32; 16]>,
+    #[serde(default, rename = "camera_T_base", alias = "camera_t_base")]
+    pub camera_t_base: Option<[f32; 16]>,
     /// Timestamp
     pub timestamp: f64,
 }
@@ -47,7 +47,7 @@ impl Default for Observation {
             joint_positions: vec![0.0; 6], // Default 6-DOF
             joint_velocities: vec![0.0; 6],
             ee_pose: None,
-            camera_T_base: None,
+            camera_t_base: None,
             timestamp: 0.0,
         }
     }
@@ -250,14 +250,14 @@ mod tests {
     fn test_skill_context() {
         let mut params = HashMap::new();
         params.insert("speed".to_string(), serde_json::json!(0.5));
-        
+
         let context = SkillContext {
             goal: "pick_object".to_string(),
             parameters: params.clone(),
             timeout_s: 30.0,
             max_retries: 3,
         };
-        
+
         assert_eq!(context.goal, "pick_object");
         assert_eq!(context.parameters.len(), 1);
         assert_eq!(context.timeout_s, 30.0);
@@ -272,7 +272,7 @@ mod tests {
             execution_time_s: 5.5,
             actions_executed: 42,
         };
-        
+
         assert!(result.success);
         assert_eq!(result.message, "Skill executed successfully");
         assert_eq!(result.execution_time_s, 5.5);
@@ -283,7 +283,7 @@ mod tests {
     fn test_observation_with_ee_pose() {
         let mut obs = Observation::default();
         obs.ee_pose = Some(vec![0.1, 0.2, 0.3, 0.0, 0.0, 0.0]);
-        
+
         assert!(obs.ee_pose.is_some());
         if let Some(pose) = obs.ee_pose {
             assert_eq!(pose.len(), 6);
@@ -301,10 +301,10 @@ mod tests {
             confidence: 0.9,
             timestamp: 999.0,
         };
-        
+
         let json = serde_json::to_string(&action).unwrap();
         let deserialized: Action = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.values, action.values);
         assert_eq!(deserialized.confidence, action.confidence);
         assert_eq!(deserialized.timestamp, action.timestamp);
@@ -315,13 +315,13 @@ mod tests {
         let mut metadata = HashMap::new();
         metadata.insert("model_version".to_string(), serde_json::json!("1.0.0"));
         metadata.insert("temperature".to_string(), serde_json::json!(0.7));
-        
+
         let result = PolicyResult {
             actions: vec![Action::default()],
             metadata: metadata.clone(),
             inference_time_ms: 20.0,
         };
-        
+
         assert_eq!(result.metadata.len(), 2);
         assert!(result.metadata.contains_key("model_version"));
         assert!(result.metadata.contains_key("temperature"));

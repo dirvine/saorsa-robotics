@@ -358,6 +358,7 @@ impl WatchdogManager {
 }
 
 /// Helper functions for specific watchdog types
+#[allow(dead_code)]
 pub mod helpers {
     use super::*;
 

@@ -9,7 +9,7 @@ use std::error::Error;
 fn json_number(value: f64) -> serde_json::Value {
     serde_json::Value::Number(
         serde_json::Number::from_f64(value)
-            .unwrap_or_else(|| serde_json::Number::from(value as i64))
+            .unwrap_or_else(|| serde_json::Number::from(value as i64)),
     )
 }
 
@@ -181,7 +181,7 @@ impl ReachSkill {
             joint_positions: vec![0.0; 6], // 6-DOF arm
             joint_velocities: vec![0.0; 6],
             ee_pose: Some(vec![0.0; 6]), // Current pose
-            camera_T_base: None,
+            camera_t_base: None,
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)?
                 .as_secs_f64(),
@@ -561,10 +561,10 @@ impl PlaceSkill {
 mod tests {
     use super::*;
     use std::collections::HashMap;
-    
+
     fn create_test_policy() -> crate::mock::MockPolicy {
-        use crate::{PolicyConfig, NormalizationConfig, DeviceConfig};
-        
+        use crate::{DeviceConfig, NormalizationConfig, PolicyConfig};
+
         let config = PolicyConfig {
             model_type: "mock".to_string(),
             model_path: "test".to_string(),
@@ -582,7 +582,7 @@ mod tests {
             },
             metadata: HashMap::new(),
         };
-        
+
         crate::mock::MockPolicy::new(config).unwrap()
     }
 
@@ -590,19 +590,22 @@ mod tests {
     async fn test_reach_to_skill() {
         let skill = ReachSkill::new();
         let policy = create_test_policy();
-        
+
         let mut params = HashMap::new();
-        params.insert("target_pose".to_string(), serde_json::json!([0.3, 0.2, 0.1, 0.0, 0.0, 0.0]));
-        
+        params.insert(
+            "target_pose".to_string(),
+            serde_json::json!([0.3, 0.2, 0.1, 0.0, 0.0, 0.0]),
+        );
+
         let context = SkillContext {
             goal: "reach to position".to_string(),
             parameters: params,
             timeout_s: 10.0,
             max_retries: 3,
         };
-        
+
         let result = skill.execute(&context, &policy).await.unwrap();
-        
+
         // For mock policy, we don't expect actual success since actions are random
         // Just check that it runs without panicking
         assert!(result.actions_executed > 0);
@@ -612,17 +615,20 @@ mod tests {
     #[test]
     fn test_reach_to_target_extraction() {
         let skill = ReachSkill::new();
-        
+
         let mut params = HashMap::new();
-        params.insert("target_pose".to_string(), serde_json::json!([0.5, 0.5, 0.5]));
-        
+        params.insert(
+            "target_pose".to_string(),
+            serde_json::json!([0.5, 0.5, 0.5]),
+        );
+
         let context = SkillContext {
             goal: "test".to_string(),
             parameters: params,
             timeout_s: 10.0,
             max_retries: 1,
         };
-        
+
         let target = skill.extract_target_pose(&context).unwrap();
         assert_eq!(target, vec![0.5, 0.5, 0.5]);
     }
@@ -630,14 +636,14 @@ mod tests {
     #[test]
     fn test_reach_to_missing_target() {
         let skill = ReachSkill::new();
-        
+
         let context = SkillContext {
             goal: "test".to_string(),
             parameters: HashMap::new(),
             timeout_s: 10.0,
             max_retries: 1,
         };
-        
+
         let result = skill.extract_target_pose(&context);
         assert!(result.is_err());
     }
@@ -646,19 +652,22 @@ mod tests {
     async fn test_pick_skill() {
         let skill = PickSkill::new();
         let policy = create_test_policy();
-        
+
         let mut params = HashMap::new();
-        params.insert("pick_location".to_string(), serde_json::json!([0.4, 0.3, 0.2]));
-        
+        params.insert(
+            "pick_location".to_string(),
+            serde_json::json!([0.4, 0.3, 0.2]),
+        );
+
         let context = SkillContext {
             goal: "pick object".to_string(),
             parameters: params,
             timeout_s: 15.0,
             max_retries: 2,
         };
-        
+
         let result = skill.execute(&context, &policy).await.unwrap();
-        
+
         // For mock policy, we don't expect actual success since actions are random
         // Just check that it runs without panicking
         assert!(result.actions_executed > 0);
@@ -676,19 +685,22 @@ mod tests {
     async fn test_place_skill() {
         let skill = PlaceSkill::new();
         let policy = create_test_policy();
-        
+
         let mut params = HashMap::new();
-        params.insert("place_location".to_string(), serde_json::json!([0.2, 0.2, 0.05]));
-        
+        params.insert(
+            "place_location".to_string(),
+            serde_json::json!([0.2, 0.2, 0.05]),
+        );
+
         let context = SkillContext {
             goal: "place object".to_string(),
             parameters: params,
             timeout_s: 10.0,
             max_retries: 2,
         };
-        
+
         let result = skill.execute(&context, &policy).await.unwrap();
-        
+
         // For mock policy, we don't expect actual success since actions are random
         // Just check that it runs without panicking
         assert!(result.actions_executed > 0);
@@ -699,10 +711,13 @@ mod tests {
     fn test_json_number_helper() {
         let val = json_number(3.14159);
         assert!(val.is_number());
-        
+
         let val_nan = json_number(f64::NAN);
-        assert_eq!(val_nan, serde_json::Value::Number(serde_json::Number::from(0)));
-        
+        assert_eq!(
+            val_nan,
+            serde_json::Value::Number(serde_json::Number::from(0))
+        );
+
         let val_inf = json_number(f64::INFINITY);
         // Should convert to i64::MAX
         assert!(val_inf.is_number());
@@ -713,7 +728,7 @@ mod tests {
         let skill = ReachSkill::new();
         let target = vec![0.3, 0.3, 0.3];
         let _current_pos = vec![0.0, 0.0, 0.0];
-        
+
         // ReachSkill doesn't have plan_reach_actions, it uses the trait method execute
         // Let's test the pose extraction instead
         let mut params = HashMap::new();
@@ -726,7 +741,7 @@ mod tests {
         };
         let extracted = skill.extract_target_pose(&context).unwrap();
         assert_eq!(extracted, target);
-        
+
         // The extracted target should match what we put in
         assert_eq!(extracted.len(), 3);
     }
@@ -734,10 +749,10 @@ mod tests {
     #[test]
     fn test_observation_update() {
         let _skill = ReachSkill::new();
-        
+
         let mut obs = Observation::default();
         obs.ee_pose = Some(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
-        
+
         // Test is not applicable for ReachSkill
         // The observation update is internal to the execute method
     }
@@ -745,17 +760,20 @@ mod tests {
     #[test]
     fn test_place_location_extraction() {
         let skill = PlaceSkill::new();
-        
+
         let mut params = HashMap::new();
-        params.insert("place_location".to_string(), serde_json::json!([0.1, 0.2, 0.3]));
-        
+        params.insert(
+            "place_location".to_string(),
+            serde_json::json!([0.1, 0.2, 0.3]),
+        );
+
         let context = SkillContext {
             goal: "test".to_string(),
             parameters: params,
             timeout_s: 10.0,
             max_retries: 1,
         };
-        
+
         let location = skill.extract_place_location(&context).unwrap();
         assert_eq!(location, vec![0.1, 0.2, 0.3]);
     }
@@ -763,17 +781,17 @@ mod tests {
     #[test]
     fn test_invalid_place_location() {
         let skill = PlaceSkill::new();
-        
+
         let mut params = HashMap::new();
         params.insert("place_location".to_string(), serde_json::json!("invalid"));
-        
+
         let context = SkillContext {
             goal: "test".to_string(),
             parameters: params,
             timeout_s: 10.0,
             max_retries: 1,
         };
-        
+
         let result = skill.extract_place_location(&context);
         assert!(result.is_err());
     }

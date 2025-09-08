@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! safety-guard: Safety constraints and monitoring for robotics
 //!
 //! This crate provides a comprehensive safety system for robotic operations including:
@@ -10,7 +11,7 @@ mod types;
 pub use types::{SafetyCheckResult, SafetyConstraint, SafetyViolation, WatchdogStatus};
 
 pub mod constraints;
-pub use constraints::{ConstraintEngine, ConstraintState, create_default_constraint_engine};
+pub use constraints::{create_default_constraint_engine, ConstraintEngine, ConstraintState};
 
 mod watchdogs;
 pub use watchdogs::{CameraWatchdog, CanWatchdog, EStopWatchdog, Watchdog, WatchdogManager};
@@ -74,7 +75,7 @@ pub fn check_action_safety(
     constraint_engine: &mut ConstraintEngine,
 ) -> Result<SafetyStatus, Box<dyn std::error::Error>> {
     use std::collections::HashMap;
-    
+
     // Create constraint state from current observation
     let mut state = ConstraintState {
         joint_positions: Vec::new(),
@@ -82,7 +83,7 @@ pub fn check_action_safety(
         ee_position: None,
         additional_state: HashMap::new(),
     };
-    
+
     match &action.action_type {
         vla_policy::ActionType::JointPositions => {
             // Use the action values as the new joint positions to check
@@ -95,7 +96,7 @@ pub fn check_action_safety(
                 let new_x = ee_pose[0] + action.values[0];
                 let new_y = ee_pose[1] + action.values[1];
                 let new_z = ee_pose[2] + action.values[2];
-                
+
                 state.ee_position = Some((new_x, new_y, new_z));
                 state.joint_positions = current_state.joint_positions.clone();
                 state.joint_velocities = current_state.joint_velocities.clone();
@@ -112,21 +113,21 @@ pub fn check_action_safety(
             }
         }
     }
-    
+
     // Check constraints
     let result = constraint_engine.check_all(&state)?;
-    
+
     if !result.is_safe {
         // Return the first violation as an error
         if let Some(violation) = result.violations.first() {
             return Ok(SafetyStatus::Violation(violation.message.clone()));
         }
     }
-    
+
     // Check for warnings
     if let Some(warning) = result.warnings.first() {
         return Ok(SafetyStatus::Warning(warning.message.clone()));
     }
-    
+
     Ok(SafetyStatus::Safe)
 }

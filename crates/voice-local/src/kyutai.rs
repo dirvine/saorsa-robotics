@@ -11,7 +11,7 @@
 //! Example:
 //! ```ignore
 //! use voice_local::AsrStreamConfig;
-//! 
+//!
 //! let config = AsrStreamConfig {
 //!     wake_words: vec!["Tektra".to_string(), "Computer".to_string()],
 //!     wake_word_sensitivity: 0.7,
@@ -59,7 +59,10 @@ impl AsrStream for KyutaiAsrStream {
         match Self::new(config.clone()) {
             Ok(stream) => stream,
             Err(e) => {
-                warn!("Failed to create Kyutai ASR stream: {}. Using fallback configuration", e);
+                warn!(
+                    "Failed to create Kyutai ASR stream: {}. Using fallback configuration",
+                    e
+                );
                 // Return a basic configuration that won't crash
                 Self {
                     config,

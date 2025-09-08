@@ -73,6 +73,7 @@ pub struct ConstraintExpression {
 }
 
 /// Predefined safety expressions
+#[allow(dead_code)]
 pub mod expressions {
     pub const JOINT_POSITION_LIMIT: &str =
         "joint_0 >= -3.14 && joint_0 <= 3.14 && joint_1 >= -1.57 && joint_1 <= 1.57";

@@ -24,7 +24,11 @@ impl WallxHttpPolicy {
                 .to_string()
         };
         let client = reqwest::Client::builder().build()?;
-        Ok(Self { config, endpoint, client })
+        Ok(Self {
+            config,
+            endpoint,
+            client,
+        })
     }
 }
 
@@ -35,7 +39,10 @@ impl Policy for WallxHttpPolicy {
         Ok(())
     }
 
-    async fn predict(&self, observation: &Observation) -> Result<PolicyResult, Box<dyn std::error::Error>> {
+    async fn predict(
+        &self,
+        observation: &Observation,
+    ) -> Result<PolicyResult, Box<dyn std::error::Error>> {
         #[derive(serde::Serialize)]
         struct ObsReq<'a> {
             image_shape: (u32, u32, u32),
@@ -58,12 +65,7 @@ impl Policy for WallxHttpPolicy {
         };
 
         let start = std::time::Instant::now();
-        let resp = self
-            .client
-            .post(&self.endpoint)
-            .json(&req)
-            .send()
-            .await?;
+        let resp = self.client.post(&self.endpoint).json(&req).send().await?;
 
         if !resp.status().is_success() {
             return Err(format!("wallx_http: HTTP {}", resp.status()).into());
@@ -99,12 +101,21 @@ impl Policy for WallxHttpPolicy {
                     ActionType::JointPositions
                 }
             };
-            actions.push(Action { action_type: at, values: a.values, confidence: a.confidence, timestamp: observation.timestamp });
+            actions.push(Action {
+                action_type: at,
+                values: a.values,
+                confidence: a.confidence,
+                timestamp: observation.timestamp,
+            });
         }
 
         let dt_remote = body.inference_time_ms.unwrap_or_default();
         let dt_total = start.elapsed().as_millis() as f64;
-        Ok(PolicyResult { actions, metadata: body.metadata.unwrap_or_default(), inference_time_ms: dt_remote.max(dt_total) })
+        Ok(PolicyResult {
+            actions,
+            metadata: body.metadata.unwrap_or_default(),
+            inference_time_ms: dt_remote.max(dt_total),
+        })
     }
 
     fn metadata(&self) -> crate::traits::PolicyMetadata {
@@ -112,11 +123,21 @@ impl Policy for WallxHttpPolicy {
             name: "WALL‑X HTTP Policy".to_string(),
             version: "0.1.0".to_string(),
             model_type: "wallx_http".to_string(),
-            input_shape: vec![self.config.image_size.0 as usize, self.config.image_size.1 as usize, 3],
+            input_shape: vec![
+                self.config.image_size.0 as usize,
+                self.config.image_size.1 as usize,
+                3,
+            ],
             output_shape: vec![7],
-            supported_actions: vec!["EndEffectorDelta".into(), "Gripper".into(), "JointPositions".into()],
+            supported_actions: vec![
+                "EndEffectorDelta".into(),
+                "Gripper".into(),
+                "JointPositions".into(),
+            ],
         }
     }
 
-    async fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
+    async fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        Ok(())
+    }
 }

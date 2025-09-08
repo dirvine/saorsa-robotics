@@ -3,12 +3,14 @@
 //! Demonstrates a depth-aware grasp pipeline (RGB(+D) → grasp pose →
 //! policy actions → safety guard → optional CAN send), plus basic skills.
 
+use can_transport::{CanBus, MockBus};
 use clap::Parser;
+use device_registry::{
+    build_frames_for_joint, load_descriptors_dir, DeviceDescriptor, JointCommand,
+};
+use safety_guard::{check_action_safety, create_default_constraint_engine, SafetyStatus};
 use vla_policy::skills::{PickSkill, PlaceSkill, ReachSkill};
 use vla_policy::{create_policy, ActionType, Observation, PolicyConfig, Skill, SkillContext};
-use safety_guard::{check_action_safety, create_default_constraint_engine, SafetyStatus};
-use device_registry::{load_descriptors_dir, build_frames_for_joint, JointCommand, DeviceDescriptor};
-use can_transport::{CanBus, MockBus};
 
 #[derive(Parser, Debug)]
 #[command(name = "vla-policy-demo", about = "Depth pick demo with mock policy")]
@@ -32,7 +34,7 @@ struct Args {
     #[arg(long)]
     cam_t_base: Option<String>,
     /// Device descriptors directory (for send demonstration)
-    #[arg(long, default_value = "configs/devices")] 
+    #[arg(long, default_value = "configs/devices")]
     desc_dir: String,
     /// Actually send frames on mock CAN bus (mock0) if true; otherwise just print
     #[arg(long, default_value_t = false)]
@@ -41,16 +43,32 @@ struct Args {
 
 fn parse_roi(s: &str) -> Option<(i32, i32, i32, i32)> {
     let parts: Vec<_> = s.split(',').collect();
-    if parts.len() != 4 { return None; }
+    if parts.len() != 4 {
+        return None;
+    }
     let px: Result<Vec<i32>, _> = parts.iter().map(|p| p.trim().parse::<i32>()).collect();
-    px.ok().and_then(|v| v.get(0).zip(v.get(1)).zip(v.get(2)).zip(v.get(3)).map(|(((x,y),w),h)| (*x,*y,*w,*h)))
+    px.ok().and_then(|v| {
+        v.get(0)
+            .zip(v.get(1))
+            .zip(v.get(2))
+            .zip(v.get(3))
+            .map(|(((x, y), w), h)| (*x, *y, *w, *h))
+    })
 }
 
 fn parse_intr(s: &str) -> Option<(f64, f64, f64, f64)> {
     let parts: Vec<_> = s.split(',').collect();
-    if parts.len() != 4 { return None; }
+    if parts.len() != 4 {
+        return None;
+    }
     let pf: Result<Vec<f64>, _> = parts.iter().map(|p| p.trim().parse::<f64>()).collect();
-    pf.ok().and_then(|v| v.get(0).zip(v.get(1)).zip(v.get(2)).zip(v.get(3)).map(|(((fx,fy),cx),cy)| (*fx,*fy,*cx,*cy)))
+    pf.ok().and_then(|v| {
+        v.get(0)
+            .zip(v.get(1))
+            .zip(v.get(2))
+            .zip(v.get(3))
+            .map(|(((fx, fy), cx), cy)| (*fx, *fy, *cx, *cy))
+    })
 }
 
 fn parse_mat4_row_major(s: &str) -> Option<[f32; 16]> {
@@ -58,7 +76,9 @@ fn parse_mat4_row_major(s: &str) -> Option<[f32; 16]> {
     match vals {
         Ok(v) if v.len() == 16 => {
             let mut out = [0.0f32; 16];
-            for (i, x) in v.into_iter().enumerate() { out[i] = x; }
+            for (i, x) in v.into_iter().enumerate() {
+                out[i] = x;
+            }
             Some(out)
         }
         _ => None,
@@ -66,8 +86,12 @@ fn parse_mat4_row_major(s: &str) -> Option<[f32; 16]> {
 }
 
 fn joint_name_for_index<'a>(desc: &'a DeviceDescriptor, idx: usize) -> &'a str {
-    if let Some(j) = desc.joints.get(idx) { return j.name.as_str(); }
-    if let Some(j) = desc.joints.first() { return j.name.as_str(); }
+    if let Some(j) = desc.joints.get(idx) {
+        return j.name.as_str();
+    }
+    if let Some(j) = desc.joints.first() {
+        return j.name.as_str();
+    }
     // Fallback for demos if descriptor has no joints
     "axis0"
 }
@@ -77,12 +101,14 @@ struct DefaultKinematics<'a> {
 }
 
 impl<'a> DefaultKinematics<'a> {
-    fn new(desc: Option<&'a DeviceDescriptor>) -> Self { Self { desc } }
+    fn new(desc: Option<&'a DeviceDescriptor>) -> Self {
+        Self { desc }
+    }
 
     fn clamp_pos(&self, idx: usize, val: f32) -> f32 {
         if let Some(desc) = self.desc {
             if let Some(j) = desc.joints.get(idx) {
-                if let Some((lo, hi)) = j.limits.pos_deg { 
+                if let Some((lo, hi)) = j.limits.pos_deg {
                     let lo_r = (lo as f32).to_radians();
                     let hi_r = (hi as f32).to_radians();
                     return val.max(lo_r.min(hi_r)).min(lo_r.max(hi_r));
@@ -92,7 +118,12 @@ impl<'a> DefaultKinematics<'a> {
         val.max(-3.14).min(3.14)
     }
 
-    fn ee_delta_to_joint_positions(&self, curr: &[f32], _ee_pose: &[f32], delta: &[f32]) -> Vec<f32> {
+    fn ee_delta_to_joint_positions(
+        &self,
+        curr: &[f32],
+        _ee_pose: &[f32],
+        delta: &[f32],
+    ) -> Vec<f32> {
         let gains = [1.0f32, 1.0, 1.0, 0.5, 0.5, 0.5];
         let mut out = curr.to_vec();
         for i in 0..out.len().min(6) {
@@ -171,7 +202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // }).await?;
 
     // Build a synthetic observation with optional ROI/depth for demo
-    let mut observation = Observation {
+    let observation = Observation {
         image: vec![128; 224 * 224 * 3], // Gray image for demo
         image_shape: (224, 224, 3),
         depth_u16: Some(vec![800u16; 224 * 224]), // 0.8m plane
@@ -181,7 +212,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         joint_positions: vec![0.0, 0.5, 0.0, 1.0, 0.0, 0.0],
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.3, 0.0, 0.2, 0.0, 0.0, 0.0]), // Current end-effector pose
-        camera_T_base: None,
+        camera_t_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs_f64(),
@@ -190,7 +221,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // If we have ROI + intr, compute a grasp pose
     if let (Some(roi_str), true) = (&args.roi, observation.depth_u16.is_some()) {
         let roi = parse_roi(roi_str).unwrap_or((92, 92, 40, 40));
-        let (fx, fy, cx, cy) = args.intr.map(|s| parse_intr(&s).unwrap_or((600.0, 600.0, 112.0, 112.0)))
+        let (fx, fy, cx, cy) = args
+            .intr
+            .map(|s| parse_intr(&s).unwrap_or((600.0, 600.0, 112.0, 112.0)))
             .unwrap_or((600.0, 600.0, 112.0, 112.0));
         let intr = vision_stereo::tags::CameraIntrinsics { fx, fy, cx, cy };
         if let Some(depth) = observation.depth_u16.as_ref() {
@@ -202,12 +235,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &intr,
                 roi,
                 args.to_base,
-                args.cam_t_base
-                    .as_deref()
-                    .and_then(parse_mat4_row_major),
+                args.cam_t_base.as_deref().and_then(parse_mat4_row_major),
             ) {
                 Ok(p) => {
-                    println!("📐 Grasp (camera frame): t=({:.3},{:.3},{:.3})", p.t[0], p.t[1], p.t[2]);
+                    println!(
+                        "📐 Grasp (camera frame): t=({:.3},{:.3},{:.3})",
+                        p.t[0], p.t[1], p.t[2]
+                    );
                 }
                 Err(e) => {
                     println!("⚠️  ROI grasp estimation failed: {e}");
@@ -243,9 +277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 p0.t,
                                 0.10,
                                 args.to_base,
-                                args.cam_t_base
-                                    .as_deref()
-                                    .and_then(parse_mat4_row_major),
+                                args.cam_t_base.as_deref().and_then(parse_mat4_row_major),
                             ) {
                                 Ok(g) => {
                                     println!(
@@ -291,9 +323,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Run actions through safety-guard and (optionally) send via CAN
     let mut engine = create_default_constraint_engine()?;
-    let mut bus = if args.send { Some(MockBus::open("mock0")?) } else { None };
-    let reg = load_descriptors_dir(&args.desc_dir)
-        .unwrap_or_else(|_| device_registry::DeviceRegistry { devices: std::collections::HashMap::new() });
+    let mut bus = if args.send {
+        Some(MockBus::open("mock0")?)
+    } else {
+        None
+    };
+    let reg =
+        load_descriptors_dir(&args.desc_dir).unwrap_or_else(|_| device_registry::DeviceRegistry {
+            devices: std::collections::HashMap::new(),
+        });
     let maybe_desc = reg.devices.values().next();
     let kin = DefaultKinematics::new(maybe_desc);
     for action in &result.actions {
@@ -305,10 +343,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if let Some(desc) = maybe_desc {
                             for (i, v) in action.values.iter().enumerate() {
                                 let joint_name = joint_name_for_index(desc, i);
-                                if let Ok(frames) = build_frames_for_joint(desc, joint_name, JointCommand::Position(*v)) {
-                                    println!("🖨️  Joint {} → {:.3} rad ({} frame(s))", i, v, frames.len());
+                                if let Ok(frames) = build_frames_for_joint(
+                                    desc,
+                                    joint_name,
+                                    JointCommand::Position(*v),
+                                ) {
+                                    println!(
+                                        "🖨️  Joint {} → {:.3} rad ({} frame(s))",
+                                        i,
+                                        v,
+                                        frames.len()
+                                    );
                                     if let Some(b) = bus.as_mut() {
-                                        for f in &frames { let _ = b.send(f); }
+                                        for f in &frames {
+                                            let _ = b.send(f);
+                                        }
                                     }
                                 }
                             }
@@ -336,10 +385,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     if let Some(desc) = maybe_desc {
                                         for (i, v) in new_j.iter().enumerate() {
                                             let joint_name = joint_name_for_index(desc, i);
-                                            if let Ok(frames) = build_frames_for_joint(desc, joint_name, JointCommand::Position(*v)) {
-                                                println!("🖨️  IK joint {} → {:.3} rad ({} frame(s))", i, v, frames.len());
+                                            if let Ok(frames) = build_frames_for_joint(
+                                                desc,
+                                                joint_name,
+                                                JointCommand::Position(*v),
+                                            ) {
+                                                println!(
+                                                    "🖨️  IK joint {} → {:.3} rad ({} frame(s))",
+                                                    i,
+                                                    v,
+                                                    frames.len()
+                                                );
                                                 if let Some(b) = bus.as_mut() {
-                                                    for f in &frames { let _ = b.send(f); }
+                                                    for f in &frames {
+                                                        let _ = b.send(f);
+                                                    }
                                                 }
                                             }
                                         }
@@ -355,7 +415,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             other => {
-                println!("🚫 Safety gate blocked action: {:?} -> {:?}", action.action_type, other);
+                println!(
+                    "🚫 Safety gate blocked action: {:?} -> {:?}",
+                    action.action_type, other
+                );
             }
         }
     }

@@ -33,7 +33,9 @@ pub fn estimate_roi_normal(
     }
     let (x, y, w, h) = roi;
     if w <= 2 || h <= 2 {
-        return Err(Error::Backend("ROI too small for normal estimation".to_string()));
+        return Err(Error::Backend(
+            "ROI too small for normal estimation".to_string(),
+        ));
     }
     let cx = (x + w / 2).max(1).min((width as i32) - 2) as usize;
     let cy = (y + h / 2).max(1).min((height as i32) - 2) as usize;
@@ -59,10 +61,14 @@ pub fn estimate_roi_normal(
         Some([x, y, z])
     };
 
-    let p_l = back_project(pts[0].0, pts[0].1).ok_or_else(|| Error::Backend("missing depth left".to_string()))?;
-    let p_r = back_project(pts[1].0, pts[1].1).ok_or_else(|| Error::Backend("missing depth right".to_string()))?;
-    let p_t = back_project(pts[2].0, pts[2].1).ok_or_else(|| Error::Backend("missing depth top".to_string()))?;
-    let p_b = back_project(pts[3].0, pts[3].1).ok_or_else(|| Error::Backend("missing depth bottom".to_string()))?;
+    let p_l = back_project(pts[0].0, pts[0].1)
+        .ok_or_else(|| Error::Backend("missing depth left".to_string()))?;
+    let p_r = back_project(pts[1].0, pts[1].1)
+        .ok_or_else(|| Error::Backend("missing depth right".to_string()))?;
+    let p_t = back_project(pts[2].0, pts[2].1)
+        .ok_or_else(|| Error::Backend("missing depth top".to_string()))?;
+    let p_b = back_project(pts[3].0, pts[3].1)
+        .ok_or_else(|| Error::Backend("missing depth bottom".to_string()))?;
 
     // Tangent vectors
     let vx = [p_r[0] - p_l[0], p_r[1] - p_l[1], p_r[2] - p_l[2]];
@@ -84,6 +90,7 @@ pub fn estimate_roi_normal(
 /// Compute a simple grasp pose from an ROI using depth.
 /// Returns pose in the camera frame; if camera_T_base is provided (row-major 4x4),
 /// set `to_base=true` to transform the output into the base frame.
+#[allow(non_snake_case)]
 pub fn grasp_from_roi(
     depth_mm: &[u16],
     width: usize,
@@ -115,10 +122,18 @@ pub fn grasp_from_roi(
     let x_hint = [1.0, 0.0, 0.0];
     let y_axis = cross(&z_axis, &x_hint);
     let y_norm = norm3(&y_axis);
-    let y_axis = if y_norm > 0.0 { [y_axis[0] / y_norm, y_axis[1] / y_norm, y_axis[2] / y_norm] } else { [0.0, 1.0, 0.0] };
+    let y_axis = if y_norm > 0.0 {
+        [y_axis[0] / y_norm, y_axis[1] / y_norm, y_axis[2] / y_norm]
+    } else {
+        [0.0, 1.0, 0.0]
+    };
     let x_axis = cross(&y_axis, &z_axis);
     let x_norm = norm3(&x_axis);
-    let x_axis = if x_norm > 0.0 { [x_axis[0] / x_norm, x_axis[1] / x_norm, x_axis[2] / x_norm] } else { [1.0, 0.0, 0.0] };
+    let x_axis = if x_norm > 0.0 {
+        [x_axis[0] / x_norm, x_axis[1] / x_norm, x_axis[2] / x_norm]
+    } else {
+        [1.0, 0.0, 0.0]
+    };
 
     let pose_cam = GraspPose {
         r: [x_axis, y_axis, z_axis],
@@ -129,12 +144,15 @@ pub fn grasp_from_roi(
         if let Some(tcb) = camera_T_base {
             return Ok(transform_pose_row_major(&pose_cam, &tcb));
         }
-        return Err(Error::Backend("camera_T_base required for base transform".to_string()));
+        return Err(Error::Backend(
+            "camera_T_base required for base transform".to_string(),
+        ));
     }
     Ok(pose_cam)
 }
 
 /// Derive a grasp pose from an AprilTag pose (camera frame) with an approach offset along tag normal.
+#[allow(non_snake_case)]
 pub fn grasp_from_tag(
     tag_r: [[f64; 3]; 3],
     tag_t: [f64; 3],
@@ -153,12 +171,17 @@ pub fn grasp_from_tag(
         tag_t[2] - approach_offset_m * z_axis[2],
     ];
 
-    let pose_cam = GraspPose { r: [x_axis, y_axis, z_axis], t };
+    let pose_cam = GraspPose {
+        r: [x_axis, y_axis, z_axis],
+        t,
+    };
     if to_base {
         if let Some(tcb) = camera_T_base {
             return Ok(transform_pose_row_major(&pose_cam, &tcb));
         }
-        return Err(Error::Backend("camera_T_base required for base transform".to_string()));
+        return Err(Error::Backend(
+            "camera_T_base required for base transform".to_string(),
+        ));
     }
     Ok(pose_cam)
 }
@@ -175,14 +198,27 @@ fn norm3(v: &[f64; 3]) -> f64 {
     (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
 }
 
+#[allow(non_snake_case)]
 fn transform_pose_row_major(p: &GraspPose, camera_T_base: &[f32; 16]) -> GraspPose {
     // camera_T_base is row-major 4x4; we want base frame pose: X_base = inv(camera_T_base) * X_cam
     // For simplicity in a demo, apply forward transform base_T_camera = inverse(camera_T_base) numerically
     // Compute inverse of 4x4 rigid transform (R t; 0 1): inv = (R^T, -R^T t)
     let r_cb = [
-        [camera_T_base[0] as f64, camera_T_base[1] as f64, camera_T_base[2] as f64],
-        [camera_T_base[4] as f64, camera_T_base[5] as f64, camera_T_base[6] as f64],
-        [camera_T_base[8] as f64, camera_T_base[9] as f64, camera_T_base[10] as f64],
+        [
+            camera_T_base[0] as f64,
+            camera_T_base[1] as f64,
+            camera_T_base[2] as f64,
+        ],
+        [
+            camera_T_base[4] as f64,
+            camera_T_base[5] as f64,
+            camera_T_base[6] as f64,
+        ],
+        [
+            camera_T_base[8] as f64,
+            camera_T_base[9] as f64,
+            camera_T_base[10] as f64,
+        ],
     ];
     let t_cb = [
         camera_T_base[3] as f64,
@@ -221,4 +257,3 @@ fn mat3_mul(a: &[[f64; 3]; 3], b: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
     }
     out
 }
-

@@ -73,6 +73,7 @@ pub struct SkillParameter {
 }
 
 /// Action head trait for different output types
+#[allow(dead_code)]
 pub trait ActionHeadTrait: Send + Sync {
     /// Convert raw policy outputs to actions
     fn process_outputs(
@@ -86,6 +87,7 @@ pub trait ActionHeadTrait: Send + Sync {
 }
 
 /// Metadata for action heads
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ActionHeadMetadata {
     pub name: String,

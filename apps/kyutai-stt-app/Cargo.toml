@@ -3,6 +3,10 @@ name = "kyutai-stt-app"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+metal = []
+cuda = []
+
 [dependencies]
 anyhow = "1.0"
 tokio = { version = "1.38", features = ["full"] }

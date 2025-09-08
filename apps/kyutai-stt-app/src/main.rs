@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables)]
 use anyhow::Result;
 use clap::Parser;
 use std::sync::Arc;

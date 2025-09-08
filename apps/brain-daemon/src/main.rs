@@ -49,12 +49,10 @@ async fn main() -> Result<()> {
         .map_err(|e| anyhow::anyhow!("Failed to create data collector: {}", e))?;
 
     // Initialize intent parser
-    init_intent_parser()
-        .map_err(|e| anyhow::anyhow!("Failed to init intent parser: {}", e))?;
+    init_intent_parser().map_err(|e| anyhow::anyhow!("Failed to init intent parser: {}", e))?;
 
     // Initialize VLA policy system
-    init_vla_policy()
-        .map_err(|e| anyhow::anyhow!("Failed to init VLA policy: {}", e))?;
+    init_vla_policy().map_err(|e| anyhow::anyhow!("Failed to init VLA policy: {}", e))?;
 
     // Create VLA policy executor (using mock policy for now)
     let policy_config = PolicyConfig {
@@ -276,7 +274,7 @@ fn create_current_observation() -> Observation {
         joint_positions: vec![0.0; 6], // Assume 6-DOF arm
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), // Placeholder pose
-        camera_T_base: None,
+        camera_t_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -309,6 +307,7 @@ fn create_robot_action(
 }
 
 /// Execute a robot action using VLA policy
+#[allow(dead_code)]
 async fn execute_robot_action(
     action: RobotAction,
     vla_executor: &VlaPolicyExecutor,

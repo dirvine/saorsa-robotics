@@ -1,9 +1,7 @@
 //! Command parser for natural language robot instructions
 
 use crate::actions::{Direction, Unit};
-use crate::{
-    ActionType, Entity, EntityType, IntentConfig, JointCommand, MotionCommand, RobotAction,
-};
+use crate::{Entity, EntityType, IntentConfig, JointCommand, MotionCommand};
 
 /// Result of parsing a command
 #[derive(Debug, Clone)]

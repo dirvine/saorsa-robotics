@@ -6,6 +6,9 @@ license.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 
+[features]
+voice-audio = []
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true

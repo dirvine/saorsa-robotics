@@ -1,3 +1,4 @@
+#![allow(unused_variables, dead_code, unused_imports, unexpected_cfgs)]
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
@@ -1368,6 +1369,7 @@ fn vision_tag_align(image_path: &str, intr_path: &str, which: u32, tag_size_m: f
     }
 }
 
+#[cfg_attr(not(feature = "vision-stereo/opencv"), allow(dead_code))]
 fn parse_roi(s: &str) -> Option<(i32, i32, i32, i32)> {
     let parts: Vec<&str> = s.split(',').collect();
     if parts.len() != 4 {
@@ -1380,6 +1382,7 @@ fn parse_roi(s: &str) -> Option<(i32, i32, i32, i32)> {
     Some((x, y, w, h))
 }
 
+#[cfg_attr(not(feature = "vision-stereo/opencv"), allow(unused_variables))]
 fn vision_depth(
     left: &str,
     right: &str,
@@ -1525,7 +1528,7 @@ enum VoiceBackend {
 }
 
 fn voice_asr_capture(backend: VoiceBackend, language: &str, duration: u32) -> Result<()> {
-    #[cfg(feature = "voice-local/audio")]
+    #[cfg(feature = "voice-audio")]
     {
         let (_stream, mic_cfg, rx) = voice_local::mic::start_default_input_i16()
             .map_err(|e| anyhow::anyhow!("mic open failed: {e}"))?;
@@ -1564,7 +1567,7 @@ fn voice_asr_capture(backend: VoiceBackend, language: &str, duration: u32) -> Re
         }
         return Ok(());
     }
-    #[cfg(not(feature = "voice-local/audio"))]
+    #[cfg(not(feature = "voice-audio"))]
     {
         println!("audio capture requires --features voice-local/audio");
         Ok(())
@@ -1572,7 +1575,7 @@ fn voice_asr_capture(backend: VoiceBackend, language: &str, duration: u32) -> Re
 }
 
 fn voice_record(duration: u32, out: &str) -> Result<()> {
-    #[cfg(feature = "voice-local/audio")]
+    #[cfg(feature = "voice-audio")]
     {
         let (_stream, mic_cfg, rx) = voice_local::mic::start_default_input_i16()
             .map_err(|e| anyhow::anyhow!("mic open failed: {e}"))?;
@@ -1603,7 +1606,7 @@ fn voice_record(duration: u32, out: &str) -> Result<()> {
         println!("recorded {}s to {} at {} Hz", duration, out, sample_rate);
         return Ok(());
     }
-    #[cfg(not(feature = "voice-local/audio"))]
+    #[cfg(not(feature = "voice-audio"))]
     {
         println!("audio capture requires --features voice-local/audio");
         Ok(())
@@ -1617,7 +1620,8 @@ enum DepthMode {
 
 fn learn_status() -> Result<()> {
     // Initialize continual learning system
-    continual_learning::init().map_err(|e| anyhow::anyhow!("Failed to init continual learning: {}", e))?;
+    continual_learning::init()
+        .map_err(|e| anyhow::anyhow!("Failed to init continual learning: {}", e))?;
 
     // Create data collector to get stats
     let collector = continual_learning::create_data_collector()
@@ -1684,17 +1688,20 @@ fn learn_train(model: &str, dataset: &str, output: &str) -> Result<()> {
     let mut collector = continual_learning::create_data_collector()
         .map_err(|e| anyhow::anyhow!("Failed to create data collector: {}", e))?;
     for sample in &data_samples {
-        collector.record_sample(
-            sample.observation.clone(),
-            sample.action.clone(),
-            sample.reward.clone(),
-        ).map_err(|e| anyhow::anyhow!("Failed to record sample: {}", e))?;
+        collector
+            .record_sample(
+                sample.observation.clone(),
+                sample.action.clone(),
+                sample.reward.clone(),
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to record sample: {}", e))?;
     }
 
     // Train reward model
     let mut reward_model = continual_learning::create_reward_model()
         .map_err(|e| anyhow::anyhow!("Failed to create reward model: {}", e))?;
-    reward_model.train(&data_samples)
+    reward_model
+        .train(&data_samples)
         .map_err(|e| anyhow::anyhow!("Failed to train reward model: {}", e))?;
 
     println!("Training completed successfully!");
@@ -1735,7 +1742,8 @@ fn learn_intervention(original_action: &str, corrected_action: &str, reason: &st
     let observation = vla_policy::Observation::default();
 
     // Record intervention
-    collector.record_intervention(observation, original, corrected, reason.to_string())
+    collector
+        .record_intervention(observation, original, corrected, reason.to_string())
         .map_err(|e| anyhow::anyhow!("Failed to record intervention: {}", e))?;
 
     println!("Intervention recorded successfully!");

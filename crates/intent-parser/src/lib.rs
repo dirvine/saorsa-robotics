@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Intent Parser for Voice Commands
 //!
 //! This crate provides natural language processing for robot voice commands,

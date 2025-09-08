@@ -11,10 +11,7 @@ use tracing::{error, info, warn};
 
 use continual_learning::{create_data_collector, init as init_continual_learning};
 use intent_parser::{init as init_intent_parser, parse_command, VlaPolicyExecutor};
-use vla_policy::{
-    create_policy, init as init_vla_policy, DeviceConfig, NormalizationConfig, Observation,
-    PolicyConfig,
-};
+use vla_policy::{create_policy, init as init_vla_policy, Observation, PolicyConfig};
 
 #[derive(Parser)]
 #[command(name = "voice-demo")]
@@ -289,7 +286,7 @@ fn create_demo_observation() -> Observation {
         joint_positions: vec![0.0, -1.57, 1.57, 0.0, 0.0, 0.0], // Home pose
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.3, 0.0, 0.4, 0.0, 3.14, 0.0]), // Example pose
-        camera_T_base: None,
+        camera_t_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()

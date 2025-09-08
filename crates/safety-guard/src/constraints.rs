@@ -1,4 +1,6 @@
-use crate::types::{ConstraintType, ViolationSeverity, SafetyCheckResult, SafetyConstraint, SafetyViolation};
+use crate::types::{
+    ConstraintType, SafetyCheckResult, SafetyConstraint, SafetyViolation, ViolationSeverity,
+};
 use evalexpr::*;
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -71,11 +73,7 @@ impl ConstraintEngine {
                     }
                 }
                 Err(e) => {
-                    tracing::error!(
-                        "Failed to evaluate constraint '{}': {}",
-                        constraint.name,
-                        e
-                    );
+                    tracing::error!("Failed to evaluate constraint '{}': {}", constraint.name, e);
                 }
             }
         }
@@ -105,7 +103,7 @@ impl ConstraintEngine {
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Create an expression based on constraint type
         let expression = self.constraint_to_expression(constraint);
-        
+
         // Try to parse the expression
         let expr = build_operator_tree(&expression)?;
 
@@ -156,30 +154,55 @@ impl ConstraintEngine {
 
         Ok(result)
     }
-    
+
     /// Convert constraint to expression string
     fn constraint_to_expression(&self, constraint: &SafetyConstraint) -> String {
         match &constraint.constraint_type {
-            ConstraintType::JointPosition { joint_index, min, max } => {
-                format!("joint_{} >= {} && joint_{} <= {}", joint_index, min, joint_index, max)
+            ConstraintType::JointPosition {
+                joint_index,
+                min,
+                max,
+            } => {
+                format!(
+                    "joint_{} >= {} && joint_{} <= {}",
+                    joint_index, min, joint_index, max
+                )
             }
             ConstraintType::JointVelocity { joint_index, max } => {
                 // evalexpr doesn't have abs(), so we check both positive and negative bounds
-                format!("vel_{} >= -{} && vel_{} <= {}", joint_index, max, joint_index, max)
+                format!(
+                    "vel_{} >= -{} && vel_{} <= {}",
+                    joint_index, max, joint_index, max
+                )
             }
             ConstraintType::JointTorque { joint_index, max } => {
                 // evalexpr doesn't have abs(), so we check both positive and negative bounds
-                format!("torque_{} >= -{} && torque_{} <= {}", joint_index, max, joint_index, max)
+                format!(
+                    "torque_{} >= -{} && torque_{} <= {}",
+                    joint_index, max, joint_index, max
+                )
             }
-            ConstraintType::WorkspaceBounds { min_x, max_x, min_y, max_y, min_z, max_z } => {
+            ConstraintType::WorkspaceBounds {
+                min_x,
+                max_x,
+                min_y,
+                max_y,
+                min_z,
+                max_z,
+            } => {
                 format!("ee_0 >= {} && ee_0 <= {} && ee_1 >= {} && ee_1 <= {} && ee_2 >= {} && ee_2 <= {}",
                        min_x, max_x, min_y, max_y, min_z, max_z)
             }
-            ConstraintType::EndEffectorBounds { max_reach, min_height } => {
+            ConstraintType::EndEffectorBounds {
+                max_reach,
+                min_height,
+            } => {
                 // evalexpr doesn't have sqrt(), so we check the squared distance
                 let max_reach_sq = max_reach * max_reach;
-                format!("ee_0 * ee_0 + ee_1 * ee_1 + ee_2 * ee_2 <= {} && ee_2 >= {}",
-                       max_reach_sq, min_height)
+                format!(
+                    "ee_0 * ee_0 + ee_1 * ee_1 + ee_2 * ee_2 <= {} && ee_2 >= {}",
+                    max_reach_sq, min_height
+                )
             }
             ConstraintType::CollisionAvoidance { enabled } => {
                 if *enabled {
@@ -192,7 +215,10 @@ impl ConstraintEngine {
     }
 
     /// Update context with current state
-    fn update_context(&mut self, state: &ConstraintState) -> Result<(), Box<dyn std::error::Error>> {
+    fn update_context(
+        &mut self,
+        state: &ConstraintState,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Update joint positions
         for (i, &pos) in state.joint_positions.iter().enumerate() {
             self.context
@@ -207,9 +233,12 @@ impl ConstraintEngine {
 
         // Update end-effector position
         if let Some(ee_pos) = &state.ee_position {
-            self.context.set_value("ee_0".to_string(), Value::Float(ee_pos.0 as f64))?;
-            self.context.set_value("ee_1".to_string(), Value::Float(ee_pos.1 as f64))?;
-            self.context.set_value("ee_2".to_string(), Value::Float(ee_pos.2 as f64))?;
+            self.context
+                .set_value("ee_0".to_string(), Value::Float(ee_pos.0 as f64))?;
+            self.context
+                .set_value("ee_1".to_string(), Value::Float(ee_pos.1 as f64))?;
+            self.context
+                .set_value("ee_2".to_string(), Value::Float(ee_pos.2 as f64))?;
         }
 
         // Update additional state variables
@@ -479,10 +508,10 @@ mod tests {
     #[test]
     fn test_default_constraint_engine() {
         let engine = create_default_constraint_engine().unwrap();
-        
+
         // Should have 6 joint limits + 1 workspace + 6 velocity = 13 constraints
         assert_eq!(engine.get_constraints().len(), 13);
-        
+
         // Test with safe state
         let state = ConstraintState {
             joint_positions: vec![0.0; 6],
@@ -490,7 +519,7 @@ mod tests {
             ee_position: Some((0.3, 0.3, 0.3)),
             additional_state: HashMap::new(),
         };
-        
+
         let mut engine = create_default_constraint_engine().unwrap();
         let result = engine.check_all(&state).unwrap();
         assert!(result.is_safe);
@@ -503,9 +532,7 @@ mod tests {
         // so this test passes as expected
         let constraint = SafetyConstraint {
             name: "collision".to_string(),
-            constraint_type: ConstraintType::CollisionAvoidance {
-                enabled: true,
-            },
+            constraint_type: ConstraintType::CollisionAvoidance { enabled: true },
             severity: ViolationSeverity::Critical,
             enabled: true,
             description: "Collision avoidance".to_string(),
@@ -519,7 +546,7 @@ mod tests {
     fn test_clear_constraints() {
         let mut engine = create_default_constraint_engine().unwrap();
         assert!(!engine.get_constraints().is_empty());
-        
+
         engine.clear_constraints();
         assert_eq!(engine.get_constraints().len(), 0);
     }

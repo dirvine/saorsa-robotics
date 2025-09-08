@@ -1,7 +1,6 @@
 //! VLA Policy integration for intent execution
 
-use crate::actions::Direction;
-use crate::{ActionDirection, ActionType, ActionUnit, JointCommand, MotionCommand, RobotAction};
+use crate::{ActionType, ActionUnit, JointCommand, MotionCommand, RobotAction};
 use std::sync::Arc;
 use vla_policy::{Action, ActionType as VlaActionType, Observation, Policy, PolicyConfig};
 

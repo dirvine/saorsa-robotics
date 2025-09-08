@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         joint_positions: vec![0.0, 0.5, 0.0, 1.0, 0.0, 0.0],
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.3, 0.0, 0.2, 0.0, 0.0, 0.0]), // Current end-effector pose
-        camera_T_base: None,
+        camera_t_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs_f64(),
