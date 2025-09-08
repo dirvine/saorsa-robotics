@@ -101,9 +101,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let observation = Observation {
         image: vec![128; 224 * 224 * 3],
         image_shape: (224, 224, 3),
+        depth_u16: None,
+        depth_shape: None,
+        dof_mask: None,
+        dataset_name: None,
         joint_positions: vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        camera_T_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs_f64(),

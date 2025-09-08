@@ -282,9 +282,14 @@ fn create_demo_observation() -> Observation {
     Observation {
         image: vec![128; 224 * 224 * 3], // Gray placeholder image
         image_shape: (224, 224, 3),
+        depth_u16: None,
+        depth_shape: None,
+        dof_mask: None,
+        dataset_name: None,
         joint_positions: vec![0.0, -1.57, 1.57, 0.0, 0.0, 0.0], // Home pose
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.3, 0.0, 0.4, 0.0, 3.14, 0.0]), // Example pose
+        camera_T_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()

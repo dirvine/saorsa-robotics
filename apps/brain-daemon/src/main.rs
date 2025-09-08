@@ -72,6 +72,7 @@ async fn main() -> Result<()> {
             device_type: "cpu".to_string(),
             device_id: None,
         },
+        metadata: std::collections::HashMap::new(),
     };
 
     let policy = create_policy(policy_config.clone())
@@ -268,9 +269,14 @@ fn create_current_observation() -> Observation {
     Observation {
         image: vec![128; 224 * 224 * 3], // Gray placeholder image
         image_shape: (224, 224, 3),
+        depth_u16: None,
+        depth_shape: None,
+        dof_mask: None,
+        dataset_name: None,
         joint_positions: vec![0.0; 6], // Assume 6-DOF arm
         joint_velocities: vec![0.0; 6],
         ee_pose: Some(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), // Placeholder pose
+        camera_T_base: None,
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()

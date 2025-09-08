@@ -174,9 +174,14 @@ impl ReachSkill {
         Ok(Observation {
             image: vec![], // Empty for now
             image_shape: (480, 640, 3),
+            depth_u16: None,
+            depth_shape: None,
+            dof_mask: None,
+            dataset_name: None,
             joint_positions: vec![0.0; 6], // 6-DOF arm
             joint_velocities: vec![0.0; 6],
             ee_pose: Some(vec![0.0; 6]), // Current pose
+            camera_T_base: None,
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)?
                 .as_secs_f64(),

@@ -30,6 +30,7 @@
 - **OpenVLA** — open‑source VLA (7B), pretrained on 970k episodes (Open‑X Embodiment), code & checkpoints; **OpenVLA‑OFT** shows 25–50× faster inference and ↑success on LIBERO.  
 - **MolmoAct (AI2, 2025)** — first fully open **Action Reasoning Model (ARM)** “thinks in 3D”, plans waypoints; blog & coverage.  
 - Related: **Octo** (Stanford), **RDT‑1B** (Tsinghua), **Open X‑Embodiment** dataset.
+ - **X2Robot depth‑aware manipulation (2025)** — see draft integration note: `docs/research/X2ROBOT_DEPTH_MANIPULATION.md` (source link currently unreachable from our environment).
 
 ## Stereo cameras (Jetson/macOS)
 - **ZED SDK** (Jetson install guide).  

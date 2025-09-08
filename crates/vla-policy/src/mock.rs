@@ -45,11 +45,26 @@ impl Policy for MockPolicy {
 
         // Create joint position action
         let joint_positions: Vec<f32> = (0..6).map(|_| rng.gen_range(-1.57..1.57)).collect();
-
         actions.push(Action {
             action_type: ActionType::JointPositions,
             values: joint_positions,
             confidence: rng.gen_range(0.7..0.95),
+            timestamp: observation.timestamp,
+        });
+
+        // Add an EE delta action (small deltas)
+        let ee_delta: Vec<f32> = vec![
+            rng.gen_range(-0.02..0.02),
+            rng.gen_range(-0.02..0.02),
+            rng.gen_range(-0.02..0.02),
+            rng.gen_range(-0.05..0.05),
+            rng.gen_range(-0.05..0.05),
+            rng.gen_range(-0.05..0.05),
+        ];
+        actions.push(Action {
+            action_type: ActionType::EndEffectorDelta,
+            values: ee_delta,
+            confidence: rng.gen_range(0.8..0.98),
             timestamp: observation.timestamp,
         });
 

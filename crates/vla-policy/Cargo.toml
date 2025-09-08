@@ -11,6 +11,7 @@ default = ["mock"]
 mock = []
 openvla = ["dep:pyo3", "dep:reqwest"]
 molmoact = ["dep:pyo3"]
+wallx-http = ["dep:reqwest"]
 
 [dependencies]
 thiserror.workspace = true

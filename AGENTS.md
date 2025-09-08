@@ -1,38 +1,34 @@
-# AGENTS.md - Saorsa Robotics Development Guide
+# Repository Guidelines
 
-## Build/Lint/Test Commands
+## Project Structure & Module Organization
+- `crates/*`: Rust libraries (e.g., `can-transport`, `device-registry`, `vision-stereo`).
+- `apps/*`: Rust binaries (e.g., `sr-cli`, `brain-daemon`, `kyutai-stt-app`).
+- `examples/*`: Small runnable demos; `configs/*`: runtime settings; `docs/*`: design notes; `rl/*`: training scripts; `archive/*`: legacy.
+- Tests: unit tests in `src` modules; integration tests in `crates/<name>/tests`.
 
-**Rust (Workspace):**
-- Build: `cargo build --workspace --all-targets`
-- Format: `cargo fmt --all`
-- Lint: `cargo clippy --all-features -- -D clippy::panic -D clippy::unwrap_used -D clippy::expect_used`
-- Test all: `cargo test --workspace`
-- Test single: `cargo test --package <crate-name> <test_name>`
-- All: `make rust-all`
+## Build, Test, and Development Commands
+- Build (workspace): `cargo build --workspace --all-targets`.
+- Format: `cargo fmt --all`.
+- Lint (panic-free policy): `cargo clippy --all-features -- -D clippy::panic -D clippy::unwrap_used -D clippy::expect_used -W clippy::pedantic`.
+- Test: `cargo test --workspace` (single: `cargo test -p <crate> <name>`).
+- Run an app: `cargo run -p sr-cli -- <args>`.
+- Convenience: `make rust-all` (fmt + build + clippy).
+- Python tooling (where present): `ruff check .`, `black .`, `pytest`.
+- Tip: structural code search with `sg -lang rust -p '<pattern>'`.
 
-**Python:**
-- Lint: `ruff check .`
-- Format: `black .`
-- Test: `python -m pytest` (if available)
+## Coding Style & Naming Conventions
+- Rust: use `Result` + `?`; forbid `unwrap/expect/panic` outside tests; workspace forbids `unsafe`. Prefer `thiserror` in libs and `tracing` for structured logs. Docs with `//!` (modules) and `///` (items). Names: `snake_case` funcs/vars, `PascalCase` types, `SCREAMING_SNAKE_CASE` consts.
+- Python: line length 100 (ruff/black); one import per line; type hints for public APIs.
 
-## Code Style Guidelines
+## Testing Guidelines
+- Aim ≥85% coverage for new/changed code. Keep tests deterministic; gate hardware/IO behind features.
+- Rust integration test example: `crates/can-transport/tests/can_roundtrip.rs`.
+- Run all tests: `cargo test --workspace`; single crate: `cargo test -p <crate>`.
 
-**Rust:**
-- **Error Handling:** Use `Result<T, E>` with `?` operator. Never use `unwrap()`, `expect()`, or `panic!()` in production code
-- **Imports:** Group std, external crates, then local modules. Use explicit imports
-- **Naming:** snake_case for functions/variables, PascalCase for types, SCREAMING_SNAKE_CASE for constants
-- **Documentation:** Use `//!` for module docs, `///` for public items
-- **Safety:** `unsafe` blocks require justification and extensive review
+## Commit & Pull Request Guidelines
+- Commits: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`). Small, focused, with rationale in the body.
+- PRs: include a clear description, linked issues, reproduction/test steps, and logs/screenshots if relevant. CI must pass (fmt, clippy, tests).
 
-**Python:**
-- **Line Length:** 100 characters (ruff/black)
-- **Imports:** Standard library first, then third-party, then local. One import per line
-- **Naming:** snake_case for functions/variables, PascalCase for classes, UPPER_CASE for constants
-- **Types:** Use type hints for all function parameters and return values
-- **Error Handling:** Use specific exceptions, avoid bare `except:`
-- **Documentation:** Use docstrings for all public functions/classes
-
-**General:**
-- **Commits:** Use conventional commits (feat:, fix:, docs:, etc.)
-- **Testing:** Write tests for all new functionality. Aim for >85% coverage
-- **Security:** Never log secrets, validate all inputs, use secure dependencies
+## Security & Configuration Tips
+- Do not commit secrets. Copy `.env.example` → `.env` for local runs.
+- Validate inputs and return precise errors; prefer `anyhow` in bins and `thiserror` in libraries.

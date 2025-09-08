@@ -28,5 +28,7 @@ pub mod io;
 #[cfg(feature = "opencv")]
 pub mod depth;
 
-#[cfg(feature = "apriltag")]
 pub mod tags;
+
+/// Grasp pose helpers (ROI- and tag-based)
+pub mod grasp;

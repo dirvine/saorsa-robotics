@@ -25,6 +25,9 @@ pub mod openvla;
 #[cfg(feature = "molmoact")]
 pub mod molmoact;
 
+#[cfg(feature = "wallx-http")]
+pub mod wallx_http;
+
 /// Initialize the VLA policy system
 pub fn init() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Initializing VLA Policy system");
@@ -49,6 +52,11 @@ pub fn create_policy(
         #[cfg(feature = "molmoact")]
         "molmoact" => {
             let policy = molmoact::MolmoActPolicy::new(config)?;
+            Ok(std::sync::Arc::new(policy))
+        }
+        #[cfg(feature = "wallx-http")]
+        "wallx_http" => {
+            let policy = wallx_http::WallxHttpPolicy::new(config)?;
             Ok(std::sync::Arc::new(policy))
         }
         _ => Err(format!("Unsupported policy type: {}", config.model_type).into()),

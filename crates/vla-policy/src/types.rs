@@ -8,12 +8,29 @@ pub struct Observation {
     pub image: Vec<u8>,
     /// Image dimensions (height, width, channels)
     pub image_shape: (u32, u32, u32),
+    /// Optional aligned depth image (millimeters), row-major HxW
+    #[serde(default)]
+    pub depth_u16: Option<Vec<u16>>, 
+    /// Optional depth image shape (height, width)
+    #[serde(default)]
+    pub depth_shape: Option<(u32, u32)>,
+    /// Optional DOF mask: 1 byte per joint (1 = enabled), for interop with external policies
+    #[serde(default)]
+    pub dof_mask: Option<Vec<u8>>, 
+    /// Optional dataset/source name for interop/testing (e.g., "lerobot")
+    #[serde(default)]
+    pub dataset_name: Option<String>,
     /// Joint positions (radians)
     pub joint_positions: Vec<f32>,
     /// Joint velocities (rad/s)
     pub joint_velocities: Vec<f32>,
     /// End-effector pose (x, y, z, rx, ry, rz)
     pub ee_pose: Option<Vec<f32>>,
+    /// Optional camera extrinsics: 4x4 row-major homogeneous transform camera_T_base
+    /// Defines a transform from base frame to camera frame.
+    /// If provided, grasp poses computed in camera frame can be mapped to base.
+    #[serde(default)]
+    pub camera_T_base: Option<[f32; 16]>,
     /// Timestamp
     pub timestamp: f64,
 }
@@ -23,9 +40,14 @@ impl Default for Observation {
         Self {
             image: vec![0; 640 * 480 * 3], // Default VGA RGB image
             image_shape: (480, 640, 3),
+            depth_u16: None,
+            depth_shape: None,
+            dof_mask: None,
+            dataset_name: None,
             joint_positions: vec![0.0; 6], // Default 6-DOF
             joint_velocities: vec![0.0; 6],
             ee_pose: None,
+            camera_T_base: None,
             timestamp: 0.0,
         }
     }
